@@ -21,9 +21,20 @@ class NypdOpsMixin:
         ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
 
-    def get_race(self, nypd_race, limit=10):
+    def get_race(self, race, limit=10):
         nypd_doc = self.nypd.find(
-            {c.RACE: {'$regex': f'{nypd_race}', '$options': '-i'}}
+            {c.RACE: {'$regex': f'{race}', '$options': '-i'}}
         ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
 
+    def get_sex(self, sex, limit=10):
+        nypd_doc = self.nypd.find(
+            {c.SEX: {'$regex': f'{sex}', '$options': '-i'}}
+        ).limit(limit)
+        return [nypd_from_document(nypd) for nypd in nypd_doc]
+
+    def get_age(self, age, limit=10):
+        nypd_doc = self.nypd.find(
+            {c.AGE: {'$regex': f'{age}', '$options': '-i'}}
+        ).limit(limit)
+        return [nypd_from_document(nypd) for nypd in nypd_doc]
