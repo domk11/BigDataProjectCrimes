@@ -15,11 +15,15 @@ class NypdOpsMixin:
         nypd_doc = self.nypd.find_one({c.ID: ObjectId(nypd_id)})
         return nypd_from_document(nypd_doc) if nypd_doc is not None else None
 
-    def get_borough(self, nypd_borough):
-        nypd_doc = self.nypd.find({c.BOROUGH: {'$regex': f'{nypd_borough}', '$options': '-i'}})
+    def get_borough(self, nypd_borough, limit=10):
+        nypd_doc = self.nypd.find(
+            {c.BOROUGH: {'$regex': f'{nypd_borough}', '$options': '-i'}}
+        ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
 
-    def get_race(self, nypd_race):
-        nypd_doc = self.nypd.find({c.RACE: {'$regex': f'{nypd_race}', '$options': '-i'}})
+    def get_race(self, nypd_race, limit=10):
+        nypd_doc = self.nypd.find(
+            {c.RACE: {'$regex': f'{nypd_race}', '$options': '-i'}}
+        ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
 
