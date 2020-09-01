@@ -44,18 +44,12 @@ def main():
     conf = SparkConf().set("mongo.job.input.format", "com.mongodb.hadoop.MongoInputFormat").setAppName('pyspark test')
     sc = SparkContext(conf=conf)
     spark = SparkSession(sc)
-<<<<<<< HEAD
     mongo_rdd = sc.mongoRDD('mongodb://localhost:27017/datascience.nypd',{'mongo.splitter.class':'com.mongodb.hadoop.splitter.StandaloneMongoSplitter'})
     
     males_rdd = mongo_rdd.filter(lambda x: (x[SEX] == 'M') & (x[AGE] == '<18'))
     print(males_rdd.first())
     print(males_rdd.take(10))
 
-=======
-    mongo_rdd = sc.mongoRDD('mongodb://localhost:27017/datascience.nypd', {'mongo.splitter.class': 'com.mongodb.hadoop.splitter.StandaloneMongoSplitter'})
-
-    sqlcontext = SQLContext(sc)
->>>>>>> b098c3e794431273488d4564164db5504231a104
     schema = StructType([StructField(ID, StringType()),
                          StructField(DATE, StringType()),
                          StructField(TIME, StringType()),
@@ -69,20 +63,11 @@ def main():
                          StructField(LONGITUDE, StringType()),
                          StructField(AGE, StringType()),
                          StructField(RACE, StringType()),
-<<<<<<< HEAD
                          StructField(SEX, StringType())
                          ])
 
     males_rdd = males_rdd.toDF(schema=schema)
     males_rdd.printSchema()
-=======
-                         StructField(SEX, StructType())
-                         ])
-
-    projected_rdd = mongo_rdd.map(project)
-    train_df = sqlcontext.jsonRDD(projected_rdd, schema)
-    train_df.first()
->>>>>>> b098c3e794431273488d4564164db5504231a104
     sc.stop()
 
 
