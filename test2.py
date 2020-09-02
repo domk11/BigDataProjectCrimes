@@ -7,38 +7,8 @@ from pyspark.sql.types import StructType, StructField, StringType
 import pymongo_spark
 pymongo_spark.activate()
 
-ID = '_id'
-DATE = 'CMPLNT_FR_DT'
-TIME = 'CMPLNT_FR_TM'
-PRECINCT = 'ADDR_PCT_CD'
-OFFENSE_CODE = 'KY_CD'
-OFFENSE_DESCRIPTION = 'OFNS_DESC'
-CRIME_OUTCOME = 'CRM_ATPT_CPTD_CD'
-LEVEL_OFFENSE = 'LAW_CAT_CD'
-BOROUGH = 'BORO_NM'
-LATITUDE = 'Latitude'
-LONGITUDE = 'Longitude'
-AGE = 'SUSP_AGE_GROUP'
-RACE = 'SUSP_RACE'
-SEX = 'SUSP_SEX'
+from lib.database.contracts import nypd_contract as c
 
-
-def project(doc):
-    return {ID: str(doc[ID]),
-            DATE: str(doc[DATE]),
-            TIME: str(doc[TIME]),
-            PRECINCT: str(doc[PRECINCT]),
-            OFFENSE_CODE: str(doc[OFFENSE_CODE]),
-            OFFENSE_DESCRIPTION: str(doc[OFFENSE_DESCRIPTION]),
-            CRIME_OUTCOME: str(doc[CRIME_OUTCOME]),
-            LEVEL_OFFENSE: str(doc[LEVEL_OFFENSE]),
-            BOROUGH: str(doc[BOROUGH]),
-            LATITUDE: str(doc[LATITUDE]),
-            LONGITUDE: str(doc[LONGITUDE]),
-            AGE: str(doc[AGE]),
-            RACE: str(doc[RACE]),
-            SEX: str(doc[SEX])
-            }
 
 def main():
     conf = SparkConf().set("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.11:2.3.2").setAppName('pyspark test')
@@ -52,28 +22,26 @@ def main():
                             {'mongo.splitter.class':'com.mongodb.hadoop.splitter.StandaloneMongoSplitter'})
 
 
-    males_rdd = mongo_rdd.filter(lambda x: (x[SEX] == 'M') & (x[AGE] == '<18'))
+    males_rdd = mongo_rdd.filter(lambda x: (x[c.SEX] == 'M') & (x[c.AGE] == '<18'))
     print(males_rdd.first())
     print(males_rdd.take(10))
 
-    schema = StructType([StructField(ID, StringType()),
-                         StructField(DATE, StringType()),
-                         StructField(TIME, StringType()),
-                         StructField(PRECINCT, StringType()),
-                         StructField(OFFENSE_CODE, StringType()),
-                         StructField(OFFENSE_DESCRIPTION, StringType()),
-                         StructField(CRIME_OUTCOME, StringType()),
-                         StructField(LEVEL_OFFENSE, StringType()),
-                         StructField(BOROUGH, StringType()),
-                         StructField(LATITUDE, StringType()),
-                         StructField(LONGITUDE, StringType()),
-                         StructField(AGE, StringType()),
-                         StructField(RACE, StringType()),
-                         StructField(SEX, StringType())
+    schema = StructType([StructField(c.ID, StringType()),
+                         StructField(c.DATE, StringType()),
+                         StructField(c.TIME, StringType()),
+                         StructField(c.PRECINCT, StringType()),
+                         StructField(c.OFFENSE_CODE, StringType()),
+                         StructField(c.OFFENSE_DESCRIPTION, StringType()),
+                         StructField(c.CRIME_OUTCOME, StringType()),
+                         StructField(c.LEVEL_OFFENSE, StringType()),
+                         StructField(c.BOROUGH, StringType()),
+                         StructField(c.LATITUDE, StringType()),
+                         StructField(c.LONGITUDE, StringType()),
+                         StructField(c.AGE, StringType()),
+                         StructField(c.RACE, StringType()),
+                         StructField(c.SEX, StringType())
                          ])
 
-    c = males_rdd.count()
-    print(c)
     males_rdd = males_rdd.toDF(schema=schema)
     males_rdd.printSchema()
 

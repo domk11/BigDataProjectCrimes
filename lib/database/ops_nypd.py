@@ -39,6 +39,6 @@ class NypdOpsMixin:
         ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
 
-    def get_collection(self):
-        nypd_doc = self.nypd.find()
+    def get_collection(self, limit=10):
+        nypd_doc = self.nypd.find().limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
