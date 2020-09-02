@@ -1,5 +1,3 @@
-from bson import ObjectId
-
 from lib.database import connect_db, Database
 
 
