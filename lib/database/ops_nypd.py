@@ -38,3 +38,7 @@ class NypdOpsMixin:
             {c.AGE: {'$regex': f'{age}', '$options': '-i'}}
         ).limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
+
+    def get_collection(self):
+        nypd_doc = self.nypd.find()
+        return [nypd_from_document(nypd) for nypd in nypd_doc]

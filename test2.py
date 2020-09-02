@@ -41,11 +41,17 @@ def project(doc):
             }
 
 def main():
-    conf = SparkConf().set("mongo.job.input.format", "com.mongodb.hadoop.MongoInputFormat").setAppName('pyspark test')
+    conf = SparkConf().set("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.11:2.3.2").setAppName('pyspark test')
+    conf.set("spark.mongodb.input.uri", "mongodb://localhost:27017/datascience.nypd")
+    conf.set("spark.mongodb.output.uri", "mongodb://localhost:27017/datascience.nypd")
     sc = SparkContext(conf=conf)
-    spark = SparkSession(sc)
-    mongo_rdd = sc.mongoRDD('mongodb://localhost:27017/datascience.nypd',{'mongo.splitter.class':'com.mongodb.hadoop.splitter.StandaloneMongoSplitter'})
-    
+
+    spark = SparkSession(sc).builder.config('spark.driver.extraClassPath', '/home/marco/jars/*')
+
+    mongo_rdd = sc.mongoRDD('mongodb://localhost:27017/datascience.nypd',
+                            {'mongo.splitter.class':'com.mongodb.hadoop.splitter.StandaloneMongoSplitter'})
+
+
     males_rdd = mongo_rdd.filter(lambda x: (x[SEX] == 'M') & (x[AGE] == '<18'))
     print(males_rdd.first())
     print(males_rdd.take(10))
@@ -66,8 +72,19 @@ def main():
                          StructField(SEX, StringType())
                          ])
 
+    c = males_rdd.count()
+    print(c)
     males_rdd = males_rdd.toDF(schema=schema)
     males_rdd.printSchema()
+
+    sqlContext = SQLContext(sc)
+
+    df = sqlContext.read.schema(schema).load()
+    print(df.first())
+    df.registerTempTable("mycollection")
+    result_data = sqlContext.sql("SELECT * from mycollection limit 10")
+    result_data.show()
+
     sc.stop()
 
 
