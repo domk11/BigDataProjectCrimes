@@ -1,5 +1,5 @@
-from lib.spark import create_session, create_rdd, Filter
-from lib.database.contracts import nypd_contract as c
+from src.spark import create_session, create_rdd, Filter
+from src.database.contracts import nypd_contract as c
 
 
 def main():

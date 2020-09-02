@@ -1,4 +1,4 @@
-from lib.database import connect_db, Database
+from src.database import connect_db, Database
 
 
 db = Database(connect_db().get_database())
