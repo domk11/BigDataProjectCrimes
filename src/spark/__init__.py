@@ -3,6 +3,8 @@ findspark.init()
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType, FloatType, IntegerType, DoubleType
+import pyspark.sql.functions as F
 
 from .schema import SCHEMA
 from .filter import Filter
@@ -24,8 +26,5 @@ def create_session():
         .getOrCreate()
 
 
-def create_rdd(spark, columns=None):
-    if not columns:
-        return spark.read.format('mongo').load().rdd
-    else:
-        return spark.read.format('mongo').load().select(columns).rdd
+def create_rdd(spark, columns):
+    return spark.read.format('mongo').option('sampleSize', 50000).load().select(columns).rdd
