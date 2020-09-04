@@ -10,3 +10,6 @@ class Filter:
 
     def filter_age(self, age):
         return self.rdd.filter(lambda x: (x[c.AGE] == f'<{age}'))
+
+    def filter_offence_code(self, code):
+        return self.rdd.filter(lambda x: (x[c.OFFENSE_CODE] == f'{code}'))
