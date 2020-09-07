@@ -1,6 +1,6 @@
 from bson import ObjectId
 
-from lib.model import Nypd
+from src.model import Nypd
 from ..contracts import nypd_contract as c
 
 

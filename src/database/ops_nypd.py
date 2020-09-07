@@ -1,6 +1,6 @@
 from bson import ObjectId
 
-from lib.model import Nypd
+from src.model import Nypd
 from .contracts import nypd_contract as c
 from .codecs import nypd_from_document, nypd_to_document
 
@@ -37,4 +37,8 @@ class NypdOpsMixin:
         nypd_doc = self.nypd.find(
             {c.AGE: {'$regex': f'{age}', '$options': '-i'}}
         ).limit(limit)
+        return [nypd_from_document(nypd) for nypd in nypd_doc]
+
+    def get_collection(self, limit=10):
+        nypd_doc = self.nypd.find().limit(limit)
         return [nypd_from_document(nypd) for nypd in nypd_doc]
