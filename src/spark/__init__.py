@@ -23,8 +23,16 @@ def create_session():
     return SparkSession.builder \
         .master('local') \
         .config(conf=conf) \
+        .config("spark.driver.memory", "8g") \
+        .config("spark.executor.memory", "4g") \
         .getOrCreate()
 
 
-def create_rdd(spark, columns, limit=0):
-    return spark.read.format('mongo').option("inferSchema", "false").option('sampleSize', 50000).load().limit(limit).select(columns).rdd
+def create_df(spark, columns):
+    return spark.read.format('mongo').option("inferSchema", "false").option('sampleSize', 50000).load().select(
+        columns)
+
+
+def create_rdd(spark, columns):
+    return spark.read.format('mongo').option("inferSchema", "false").option('sampleSize', 50000).load().select(
+        columns).rdd

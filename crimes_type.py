@@ -1,25 +1,29 @@
 import datetime
 
-from src.spark import create_session, create_rdd, Filter
+from src.spark import create_session, create_rdd, Filter, create_df
 import pyspark.sql.functions as F
 from src.database.contracts import nypd_contract as c
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import json
 import matplotlib.pyplot as plt
 from pyspark import StorageLevel
-from src.spark.schema import SCHEMA, COLUMNS
+from src.spark.schema import SCHEMA, COLUMNS, OFFENSE_LEVELS
+
+plt.rcParams["figure.figsize"] = [20, 8]
 
 
 def blank_as_null(x):
     return F.when(F.col(x) != "", F.col(x)).otherwise('ND')
 
 
-def top_20_crimes(nypd_crimes_rdd):
+def top_20_crimes(nypd_crimes_df):
 
     # data cleaning:
     # 1: delete rows without a OFFENSE_DESCRIPTION
-    df = nypd_crimes_rdd.filter(lambda x: [x[y] != '' for y in COLUMNS]).toDF().persist(StorageLevel.MEMORY_AND_DISK)
+    df = nypd_crimes_df.filter(F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0).persist(StorageLevel.MEMORY_AND_DISK)
+
     # df.show(n=3, truncate=False)
 
     # crime types
@@ -31,51 +35,78 @@ def top_20_crimes(nypd_crimes_rdd):
     counts_crime_pddf_top20 = counts_crime_pddf[:20]
 
     print(counts_crime_pddf_top20)
-    plt.rcParams["figure.figsize"] = [20, 8]
     counts_crime_pddf_top20.plot.barh(x=c.OFFENSE_DESCRIPTION, y='count')
     plt.savefig('top_20_crimes.png')
 
 
+def crimes_distrib(nypd_crimes_df, out):
+
+    nypd_df = nypd_crimes_df.filter(F.length(F.col(c.DATE)) > 0)
+
+    nypd_df = nypd_df.sort(F.col(c.DATE)).persist(StorageLevel.MEMORY_AND_DISK)
+
+    # min_date, max_date = nypd_df.select(F.min(c.DATE), F.max(c.DATE)).first()
+    # print(min_date, max_date)
+
+    timeframing_df = nypd_df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
+        .withColumn('year', F.trunc('date', 'YYYY')).groupby('year').count()
+    # timeframing_df.show(n=4, truncate=False)
+
+    timeframing_pddf = timeframing_df.toPandas()
+
+    timeframing_pddf['yearpd'] = timeframing_pddf['year'].apply(lambda x: str(x)[:4])
+    timeframing_pddf = timeframing_pddf[timeframing_pddf['count'] > 400000]
+
+    fig, ax = plt.subplots()
+    x = timeframing_pddf['yearpd']
+    ax.plot(x, timeframing_pddf['count'], label='Crimes')
+    ax.set(xlabel='Year - 2009-2019', ylabel='Total records',
+           title='Year-on-year crime records')
+    ax.grid(b=True, which='both', axis='y')
+    ax.legend()
+    plt.savefig(out, dpi=300)
+
+
+def crimes_severity(nypd_df, out):
+
+    # analyze crimes severity over years
+    nypd_df = nypd_df.filter(F.length(F.col(c.LEVEL_OFFENSE)) > 0)
+
+    grouped_severity_df = nypd_df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
+        .withColumn('year', F.trunc('date', 'YYYY')).groupby('year', c.LEVEL_OFFENSE).count()
+
+    severity_framing_pddf = grouped_severity_df.toPandas()
+
+    severity_framing_pddf['yearpd'] = severity_framing_pddf['year'].apply(lambda x: int(str(x)[:4]))
+    severity_framing_pddf = severity_framing_pddf[(severity_framing_pddf['yearpd'] > 2008)]
+    gr_severity_framing_pddf = severity_framing_pddf.groupby(['yearpd', c.LEVEL_OFFENSE]).sum()
+
+    plt.figure()
+    gr_severity_framing_pddf['count'].unstack().plot.bar()
+    plt.xticks(rotation=0)
+    plt.ylabel("Counts")
+    plt.xlabel('Crimes severity year-on-year')
+    plt.savefig(out, dpi=300)
+
+
 def main():
     spark = create_session()
+    spark.sparkContext.setLogLevel('ERROR')
     sc = spark.sparkContext
 
     try:
 
-        nypd_crimes_rdd = create_rdd(spark, COLUMNS, limit=5000)
-        nypd_df = nypd_crimes_rdd.toDF().persist(StorageLevel.MEMORY_AND_DISK)
-
+        #nypd_crimes_rdd = create_rdd(spark, COLUMNS)
+        nypd_df = create_df(spark, COLUMNS)
 
         # TOP 20 CRIMES:
         # top_20_crimes(nypd_crimes_rdd)
 
-        # TIME FRAMING:
-        nypd_df.select(F.min(c.DATE).alias('first_record_date'), F.max(c.DATE).alias('latest_record_date')).show(truncate=False)
-        min_date, max_date = nypd_df.select(F.min(c.DATE), F.max(c.DATE)).first()
-        print(min_date, max_date)
+        # CRIMES distrib over years
+        crimes_distrib(nypd_df, 'crimes_counts.png')
 
-        timeframing_df = nypd_df.withColumn('date_time', F.to_timestamp(c.DATE, 'MM/dd/yyyy'))\
-                                .withColumn('year', F.trunc('date_time', 'YYYY'))
-        timeframing_df.select([c.DATE, 'year']).show(n=2, truncate=False)
-        timeframing_pddf = timeframing_df.toPandas()
-        timeframing_pddf['yearpd'] = timeframing_pddf['year'].apply(lambda dt: datetime.datetime.strftime(pd.Timestamp(dt), '%Y'))
-        print(timeframing_pddf.head())
-
-        timeframing_pddf_year_grouped = timeframing_pddf.groupby('yearpd').size().reset_index(name='count')
-        print(timeframing_pddf_year_grouped.head())
-
-        fig, ax = plt.subplots()
-        ax.plot(timeframing_pddf_year_grouped['yearpd'], timeframing_pddf_year_grouped['count'], label='Crimes')
-
-        ax.set(xlabel='Year - 2001-2017', ylabel='Total records',
-               title='Year-on-year crime records')
-        ax.grid(b=True, which='both', axis='y')
-        ax.legend()
-        plt.savefig('crimes.png')
-        # cache this because will be read many times
-        f = Filter(nypd_crimes_rdd)
-
-
+        # CRIMES SEVERITY distrib
+        crimes_severity(nypd_df, 'crimes_severity.png')
 
 
     except Exception as e:
