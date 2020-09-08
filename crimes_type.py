@@ -1,8 +1,10 @@
 from src.spark import create_session, create_df
 import pyspark.sql.functions as F
+from pyspark.sql.types import *
 from src.database.contracts import nypd_contract as c
 import matplotlib.pyplot as plt
 from src.spark.schema import COLUMNS
+from utils import *
 
 plt.rcParams["figure.figsize"] = [20, 8]
 
@@ -106,6 +108,49 @@ def crimes_severity_by_district(nypd_df, out):
     plt.savefig(out, dpi=300)
 
 
+def crimes_outdoor_indoor(nypd_df, out):
+    # clean missing values
+    crimes_df = nypd_df.filter(
+        (F.length(F.col(c.LOCUS)) > 0) & (F.length(F.col(c.CRIME_OUTCOME)) > 0)
+    )
+
+    # TIME FRAMING 2009-2019
+    crimes_df = crimes_df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy'))\
+                         .withColumn('year', F.trunc('date', 'YYYY'))\
+                         .where(F.col('year') >= F.lit('2009-01-01')) \
+                         .withColumn('yearpd', udf_get_year('year')) \
+                         .select('yearpd', c.LOCUS)
+
+    crimes_locus_df = crimes_df.withColumn(c.LOCUS, udf_parse_locus(c.LOCUS))\
+                               .groupby('yearpd', c.LOCUS)\
+                               .count()\
+                               .orderBy('yearpd')
+    crimes_locus_df.show(truncate=False)
+
+    # outcomes_list = [v[c.CRIME_OUTCOME] for v in crimes_df.select(c.CRIME_OUTCOME).distinct().collect()]
+    # print(outcomes_list)
+
+    # crimes_outcome = crimes_df.groupby('yearpd', c.CRIME_OUTCOME).count().orderBy('yearpd')
+    # crimes_outcome.show(truncate=False)
+
+    plt.figure()
+    crimes_locus_pddf = crimes_locus_df.toPandas()
+
+    df_indoor = crimes_locus_pddf[crimes_locus_pddf[c.LOCUS] == 'INSIDE'].groupby('yearpd').sum()
+    df_outdoor = crimes_locus_pddf[crimes_locus_pddf[c.LOCUS] == 'OUTSIDE'].groupby('yearpd').sum()
+    x = df_indoor.index.values.tolist()
+
+    plt.figure()
+    plt.plot(x, df_indoor['count'], label='Indoor')
+    plt.plot(x, df_outdoor['count'], label='Outdoor')
+    plt.xticks(x)
+    plt.legend()
+    plt.ylabel('Count')
+    plt.xlabel('Crimes Indoor vs Outdoor')
+    plt.savefig(out)
+
+
+
 def dom(nypd_df):
     
     crime_race_groups = nypd_df.withColumn(
@@ -143,13 +188,19 @@ def main():
         # CRIMES SEVERITY distrib
         # crimes_severity(nypd_df, 'crimes_severity.png')
 
+        # CRIMES SEVERITY by district
         # crimes_severity_by_district(nypd_df, 'crimes_borough_severity.png')
 
-        dom(nypd_df)
+        # PIE RACE
+        # dom(nypd_df)
+
+        # CRIMES LOCUS and
+        crimes_outdoor_indoor(nypd_df, 'crimes_indoors_vs_outdoor.png')
 
 
     except Exception as e:
         print(e)
+    finally:
         sc.stop()
         spark.stop()
 

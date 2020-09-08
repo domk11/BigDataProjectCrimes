@@ -11,6 +11,7 @@ SCHEMA = StructType([StructField(c.ID, StringType()),
                      StructField(c.OFFENSE_DESCRIPTION, StringType()),
                      StructField(c.CRIME_OUTCOME, StringType()),
                      StructField(c.LEVEL_OFFENSE, StringType()),
+                     StructField(c.LOCUS, StringType()),
                      StructField(c.BOROUGH, StringType()),
                      StructField(c.LATITUDE, DoubleType()),
                      StructField(c.LONGITUDE, DoubleType()),
@@ -21,7 +22,8 @@ SCHEMA = StructType([StructField(c.ID, StringType()),
 
 
 COLUMNS = [c.ID, c.DATE, c.TIME, c.PRECINCT, c.OFFENSE_CODE, c.OFFENSE_DESCRIPTION, c.CRIME_OUTCOME,
-                   c.LEVEL_OFFENSE, c.BOROUGH, c.LATITUDE, c.LONGITUDE, c.AGE, c.RACE, c.SEX]
+                   c.LEVEL_OFFENSE, c.LOCUS, c.BOROUGH, c.LATITUDE, c.LONGITUDE, c.AGE, c.RACE, c.SEX]
 
 
 OFFENSE_LEVELS = ['FELONY', 'MISDEMEANOR', 'VIOLATION']
+CRIME_OUTCOMES = ['ATTEMPTED', 'COMPLETED']
