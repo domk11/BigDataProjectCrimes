@@ -1,8 +1,8 @@
-from src.spark import create_session, create_df
+from src.spark import create_session, create_df, COLUMNS
 import pyspark.sql.functions as F
 from src.database.contracts import nypd_contract as c
 import matplotlib.pyplot as plt
-from src.spark.schema import COLUMNS
+
 
 plt.rcParams["figure.figsize"] = [20, 8]
 
@@ -125,9 +125,8 @@ def dom(nypd_df):
 
 
 def main():
-    spark = create_session()
+    spark = create_session(c.FILTERED_COLLECTION)
     spark.sparkContext.setLogLevel('ERROR')
-    sc = spark.sparkContext
 
     try:
 
@@ -150,7 +149,6 @@ def main():
 
     except Exception as e:
         print(e)
-        sc.stop()
         spark.stop()
 
 
