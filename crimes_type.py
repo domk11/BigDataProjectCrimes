@@ -169,6 +169,35 @@ def dom(nypd_df):
     plt.savefig('pandas2.png')
 
 
+def crimes_day_night(nypd_df):
+    crimes_df = fix_date_nypd(nypd_df, ['2009', '2019'])
+
+    crimes_df = crimes_df.filter(
+        F.length(F.col(c.TIME)) > 0
+    )
+
+    crimes_df = crimes_df.withColumn('day_night', udf_parse_daynight(c.TIME).cast("int"))\
+                         .select([c.DATE, c.TIME, 'yearpd', 'day_night', c.OFFENSE_DESCRIPTION, c.LEVEL_OFFENSE, c.BOROUGH])
+
+    grouped_crimes_df = crimes_df.groupBy('yearpd', 'day_night', c.LEVEL_OFFENSE).count()
+
+    grouped_crimes_df_day = grouped_crimes_df.filter(F.col('day_night') == 0)
+    grouped_crimes_df_night = grouped_crimes_df.filter(F.col('day_night') == 1)
+
+    grouped_crimes_pddf_day = grouped_crimes_df_day.toPandas()
+    grouped_crimes_pddf_night = grouped_crimes_df_night.toPandas()
+
+    gr_grouped_crimes_pddf_day = grouped_crimes_pddf_day.groupby(['yearpd']).sum()
+    gr_grouped_crimes_pddf_night = grouped_crimes_pddf_night.groupby(['yearpd']).sum()
+
+    plt.figure()
+    ax = gr_grouped_crimes_pddf_day.unstack().plot()
+    gr_grouped_crimes_pddf_night.unstack().plot(ax=ax)
+    plt.legend()
+    plt.xticks(rotation=0)
+    plt.savefig('prova.png')
+
+
 def main():
     spark = create_session()
     spark.sparkContext.setLogLevel('ERROR')
@@ -195,8 +224,9 @@ def main():
         # dom(nypd_df)
 
         # CRIMES LOCUS and
-        crimes_outdoor_indoor(nypd_df, 'crimes_indoors_vs_outdoor.png')
+        # crimes_outdoor_indoor(nypd_df, 'crimes_indoors_vs_outdoor.png')
 
+        crimes_day_night(nypd_df)
 
     except Exception as e:
         print(e)

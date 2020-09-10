@@ -10,31 +10,6 @@ import matplotlib.pyplot as plt
 from shapely.geometry import Point, Polygon
 
 
-
-def fix_date_nypd(nypd_df, timeframing=None):
-    # timeframing if not none expects an array like: [lower bound, upper bound]
-    # for example: timeframing = [2009, 2019] to get record from the last 10 years
-    df = nypd_df.filter(
-        (F.length(F.col(c.DATE)) > 0)
-                        )
-
-    df = df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
-           .withColumn('year', F.trunc('date', 'YYYY')) \
-           .withColumn('yearpd', udf_get_year('year')) \
-           .select('*')
-
-    if timeframing:
-
-        if len(timeframing) != 2:
-            return -1
-
-        df = df.where(
-            (F.col('yearpd') >= F.lit(str(timeframing[0]))) & (F.col('yearpd') <= F.lit(str(timeframing[1])))
-        ).select('*')
-
-    return df
-
-
 def plot_city_crimes(nypd_df):
 
     boros = geopd.read_file(geopd.datasets.get_path("nybb"))
@@ -73,7 +48,7 @@ def main():
         # nypd_crimes_rdd = create_rdd(spark, COLUMNS)
         nypd_df = create_df(spark, COLUMNS)
         nypd_df = fix_date_nypd(nypd_df, ['2009', '2019']).cache()
-        plot_city_crimes(nypd_df)
+        #plot_city_crimes(nypd_df)
 
 
 
