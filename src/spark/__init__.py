@@ -3,14 +3,12 @@ findspark.init()
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructType, StructField, StringType, FloatType, IntegerType, DoubleType
-import pyspark.sql.functions as F
 
 from .schema import SCHEMA
 from .filter import Filter
 
 
-MONGO_URI = 'mongodb://localhost:27017/datascience.nypd'
+MONGO_URI = 'mongodb://localhost:27017/datascience.nypd_filtered'
 
 
 def create_session():
@@ -23,16 +21,14 @@ def create_session():
     return SparkSession.builder \
         .master('local') \
         .config(conf=conf) \
-        .config("spark.driver.memory", "8g") \
-        .config("spark.executor.memory", "4g") \
+        .config('spark.driver.memory', '8g') \
+        .config('spark.executor.memory', '4g') \
         .getOrCreate()
 
 
 def create_df(spark, columns):
-    return spark.read.format('mongo').option("inferSchema", "false").option('sampleSize', 50000).load().select(
-        columns)
+    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns)
 
 
 def create_rdd(spark, columns):
-    return spark.read.format('mongo').option("inferSchema", "false").option('sampleSize', 50000).load().select(
-        columns).rdd
+    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns).rdd

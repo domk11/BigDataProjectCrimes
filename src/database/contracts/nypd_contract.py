@@ -1,4 +1,5 @@
 COLLECTION_NAME = 'nypd'
+FILTERED_COLLECTION = 'nypd_filtered'
 
 ID = '_id'
 DATE = 'CMPLNT_FR_DT'
