@@ -1,5 +1,6 @@
 from src.spark import create_session, create_df
 from src.spark.SparkNYPD import SparkNYPD
+from src.database.contracts import nypd_contract as c
 
 
 def main():
