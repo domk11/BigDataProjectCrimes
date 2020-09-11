@@ -26,9 +26,9 @@ def create_session(collection):
         .getOrCreate()
 
 
-def create_df(spark, columns):
-    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns)
+def create_df(spark):
+    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load()
 
 
-def create_rdd(spark, columns):
+def create_rdd(spark, columns=None):
     return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns).rdd
