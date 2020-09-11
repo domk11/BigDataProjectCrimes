@@ -47,11 +47,12 @@ def scat_age_race(data):
     sns.catplot(x=datapd.SUSP_AGE_GROUP, y='count', hue=datapd.SUSP_RACE ,kind="bar", data=datapd)
     plt.savefig('scat.png')
 
-def cross_district_races(data):
+def cross_age_races(data):
     plt.figure()
-    data1 = data.filter(F.length(F.col(c.BOROUGH)) > 0)
-    data2 = data1.filter(F.length(F.col(c.RACE)) > 0).toPandas()
-    df = pd.crosstab(data2.BORO_NM, data2.SUSP_RACE )
+    data1 = data.filter(F.length(F.col(c.AGE)) > 0)
+    data2 = data1.filter(F.length(F.col(c.RACE)) > 0)
+    data2 = data2.groupby([c.AGE, c.RACE]).count().toPandas()
+    df = pd.crosstab(data2.SUSP_AGE_GROUP, data2.SUSP_RACE )
     color = plt.cm.gist_rainbow(np.linspace(0, 1, 10))
 
     df.div(df.sum(1).astype(float), axis = 0).plot.bar(stacked = True, color = color, figsize = (18, 12))
@@ -83,7 +84,7 @@ def main():
         #nypd_crimes_rdd = create_rdd(spark, COLUMNS)
         nypd_df = create_df(spark, COLUMNS).cache()
         cross_district_crimes(nypd_df)
-        cross_district_races(nypd_df)
+        #cross_age_races(nypd_df)
         #crime_age(nypd_df)
         #scat_age_race(nypd_df)
         #crime_race(nypd_df)
@@ -191,9 +192,3 @@ def addrss(data):
 
     plt.savefig('addr.png')
 
-
-
-
-
-if __name__ == '__main__':
-    main()

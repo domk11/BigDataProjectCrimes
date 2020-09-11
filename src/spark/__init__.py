@@ -3,12 +3,15 @@ findspark.init()
 
 from pyspark import SparkConf
 from pyspark.sql import SparkSession
+from pyspark.sql.types import StructType, StructField, StringType, FloatType, IntegerType, DoubleType
+import pyspark.sql.functions as F
 
-from .schema import SCHEMA
-from .filter import Filter
+from .schemafatal import SCHEMA
+#from .filter import Filter
 
 
 MONGO_URI = 'mongodb://localhost:27017/datascience.nypd_filtered'
+MONGO_URI = 'mongodb://localhost:27017/datascience.fatal_encounter'
 
 
 def create_session():
@@ -21,8 +24,8 @@ def create_session():
     return SparkSession.builder \
         .master('local') \
         .config(conf=conf) \
-        .config('spark.driver.memory', '8g') \
-        .config('spark.executor.memory', '4g') \
+        .config("spark.driver.memory", "4g") \
+        .config("spark.executor.memory", "4g") \
         .getOrCreate()
 
 
