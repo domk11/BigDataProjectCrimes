@@ -1,13 +1,12 @@
-from src.spark import create_session, create_rdd, Filter
+from src.spark import create_session, create_rdd, Filter, COLUMNS
 from src.database.contracts import nypd_contract as c
 
 
 def main():
-    spark = create_session()
-    sc = spark.sparkContext
+    spark = create_session(c.FILTERED_COLLECTION)
 
     try:
-        mongo_rdd = create_rdd(spark)
+        mongo_rdd = create_rdd(spark, COLUMNS)
         print(mongo_rdd.first())
 
         f = Filter(mongo_rdd)
@@ -27,7 +26,6 @@ def main():
         # count how many crimes for types
         nypd_crimes_df.groupBy(c.OFFENSE_DESCRIPTION).count().show()
     except:
-        sc.stop()
         spark.stop()
 
 

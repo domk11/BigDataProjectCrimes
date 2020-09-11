@@ -1,4 +1,4 @@
-from pyspark.sql.types import *
+from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType, DoubleType
 
 from src.database.contracts import nypd_contract as c
 
@@ -16,12 +16,11 @@ SCHEMA = StructType([StructField(c.ID, StringType()),
                      StructField(c.LONGITUDE, DoubleType()),
                      StructField(c.AGE, StringType()),
                      StructField(c.RACE, StringType()),
-                     StructField(c.SEX, StringType())
-                     ])
+                     StructField(c.SEX, StringType())])
 
 
 COLUMNS = [c.ID, c.DATE, c.TIME, c.PRECINCT, c.OFFENSE_CODE, c.OFFENSE_DESCRIPTION, c.CRIME_OUTCOME,
-                   c.LEVEL_OFFENSE, c.BOROUGH, c.LATITUDE, c.LONGITUDE, c.AGE, c.RACE, c.SEX]
+           c.LEVEL_OFFENSE, c.BOROUGH, c.LATITUDE, c.LONGITUDE, c.AGE, c.RACE, c.SEX]
 
 
 OFFENSE_LEVELS = ['FELONY', 'MISDEMEANOR', 'VIOLATION']

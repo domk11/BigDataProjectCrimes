@@ -3,9 +3,8 @@ from src.spark.SparkNYPD import SparkNYPD
 
 
 def main():
-    spark = create_session()
+    spark = create_session(c.FILTERED_COLLECTION)
     spark.sparkContext.setLogLevel('ERROR')
-    sc = spark.sparkContext
 
     try:
 
@@ -45,7 +44,6 @@ def main():
         print(e)
     finally:
         sc.stop()
-        spark.stop()
 
 
 if __name__ == '__main__':

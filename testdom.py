@@ -3,11 +3,10 @@ import squarify
 import folium
 import numpy as np
 import seaborn as sns
-from src.spark import create_session, create_df
+from src.spark import create_session, create_df, COLUMNS
 import pyspark.sql.functions as F
 from src.database.contracts import nypd_contract as c
 import matplotlib.pyplot as plt
-from src.spark.schema import COLUMNS
 
 plt.rcParams["figure.figsize"] = [20, 8]
 
@@ -74,12 +73,10 @@ def cross_district_crimes(data):
     plt.savefig('crossi.png')
 
 def main():
-    spark = create_session()
+    spark = create_session(c.FILTERED_COLLECTION)
     spark.sparkContext.setLogLevel('ERROR')
-    sc = spark.sparkContext
 
     try:
-
         #nypd_crimes_rdd = create_rdd(spark, COLUMNS)
         nypd_df = create_df(spark, COLUMNS).cache()
         cross_district_crimes(nypd_df)
@@ -87,11 +84,8 @@ def main():
         #crime_age(nypd_df)
         #scat_age_race(nypd_df)
         #crime_race(nypd_df)
-
-
     except Exception as e:
         print(e)
-        sc.stop()
         spark.stop()
 
 
