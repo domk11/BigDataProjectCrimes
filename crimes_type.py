@@ -23,8 +23,9 @@ def main():
         ny.crimes_severity(img_out=output_base + 'crimes_severity.png',
                            csv_out=output_base + 'crimes_severity.csv')
 
-        ny.crimes_severity_by_district(img_out=output_base + 'crimes_severity_by_district.png',
-                                       csv_out=output_base + 'crimes_severity_by_district.csv')
+        # TODO: fix error in plot
+        # ny.crimes_severity_by_district(img_out=output_base + 'crimes_severity_by_district.png',
+        #                                csv_out=output_base + 'crimes_severity_by_district.csv')
 
         ny.crimes_day_night(img_out=output_base + 'crimes_daynight.png',
                             csv_out=output_base + 'crimes_daynight.csv')
