@@ -18,10 +18,7 @@ OUTPUT_CRIME = '/output-crime'
 
 def copy_file_hdfs(file):
     os.chdir(HADOOP_PATH)
-    command = [
-        'bin/hadoop', 'dfs', '-copyFromLocal', file, '/'
-    ]
-    subprocess.run(command)
+    subprocess.run(['bin/hadoop', 'dfs', '-copyFromLocal', file, '/'])
 
 
 def make_executable(file):

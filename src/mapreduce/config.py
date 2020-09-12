@@ -1,5 +1,6 @@
 # extract in csv the two collection 'ny_census' and 'nypd_filtered'
-# ny_census.csv and nypd_filtered.csv must be saved inside {LOCAL_PATH}/{INPUT_FOLDER}
+# ny_census.csv and nypd_filtered.csv must be saved inside
+# {LOCAL_PATH_CENSUS}/{INPUT_FOLDER} and {LOCAL_PATH_CRIME}/{INPUT_FOLDER} respectively
 
 LOCAL_PATH = '/home/marco'
 LOCAL_PATH_CENSUS = f'{LOCAL_PATH}/mapreduce_census'
