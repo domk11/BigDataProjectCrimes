@@ -25,10 +25,12 @@ def crime_race(nypd_df):
     #print(counts_race_pddf_top8)
     plt.figure()
     counts_race_pddf_top8.plot.pie(y='count')
-    plt.savefig('pandas2.png')
+    plt.savefig('crimerace.png')
 
 def crime_age(data):
-    crime_age_groups = data.withColumn(
+    data1 = data.filter(F.length(F.col(c.AGE)) > 0)
+
+    crime_age_groups = data1.withColumn(
         c.AGE, F.when(F.col(c.AGE) == '', 'UNKNOWN').otherwise(F.col(c.AGE))
     ).groupBy(c.AGE).count()
 
@@ -40,23 +42,22 @@ def crime_age(data):
     pddf.plot.pie(y='count')
     plt.savefig('agegroup.png')
 
-def scat_age_race(data):
-
-    plt.figure()
-    sns.catplot(x=datapd.SUSP_AGE_GROUP, y='count', hue=datapd.SUSP_RACE ,kind="bar", data=datapd)
-    plt.savefig('scat.png')
-
 def cross_district_races(data):
+    labels = ['BRONX','BROOKLYN', 'MANHATTAN','QUEENS','STATEN ISLAND']
+    x = np.arange(len(labels))
+    width = 0.35
     plt.figure()
     data1 = data.filter(F.length(F.col(c.BOROUGH)) > 0)
-    data2 = data1.filter(F.length(F.col(c.RACE)) > 0).toPandas()
-    df = pd.crosstab(data2.BORO_NM, data2.SUSP_RACE )
+    data2 = data1.filter(F.length(F.col(c.RACE)) > 0)
+    df = data2.crosstab('BORO_NM', 'SUSP_RACE')
     color = plt.cm.gist_rainbow(np.linspace(0, 1, 10))
 
-    df.div(df.sum(1).astype(float), axis = 0).plot.bar(stacked = True, color = color, figsize = (18, 12))
+    #df.div(df.sum(1).astype(float), axis = 0).plot.bar(stacked = True, color = color, figsize = (18, 12))
+
+    plt.bar(x, width, data=df)
     plt.title('District vs Category of Crime', fontweight = 30, fontsize = 20)
 
-    plt.xticks(rotation = 90)
+    #plt.xticks(rotation = 90)
     plt.savefig('crossrace.png')
 
 def cross_district_crimes(data):
@@ -72,18 +73,38 @@ def cross_district_crimes(data):
     plt.xticks(rotation = 90)
     plt.savefig('crossi.png')
 
+def cross_age_race(data):
+    age_groups = ['<18','18-24','25-44','45-64','65+']
+    plt.figure()
+    data1 = data.filter((F.length(F.col(c.AGE)) > 0) & (F.col(c.AGE) != 'false'))
+    data3 = data1.where(F.col(c.AGE).isin(age_groups)).toPandas()
+    #data3 = data1.withColumn(c.AGE, F.when((F.col(c.AGE) != '<18') & (F.col(c.AGE) != '18-24') & (F.col(c.AGE) != '25-44') &( F.col(c.AGE) != '45-64') & (F.col(c.AGE) != '65+'), 'UNKNOWN').otherwise(F.col(c.AGE)))
+    #data1 = data1.groupby('SUSP_AGE_GROUP').count()
+    #dfpd = data3.filter(F.length(F.col(c.RACE)) > 0).toPandas()
+    df = pd.crosstab(data3.SUSP_RACE, data3.SUSP_AGE_GROUP)
+    color = plt.cm.gist_rainbow(np.linspace(0, 1, 10))
+
+    df.div(df.sum(1).astype(float), axis = 0).plot.bar(stacked = True, color = color, figsize = (18, 12))
+    plt.title('age vs race', fontweight = 30, fontsize = 20)
+
+    plt.xticks(rotation = 90)
+    plt.savefig('crar.png')
+
 def main():
     spark = create_session(c.FILTERED_COLLECTION)
     spark.sparkContext.setLogLevel('ERROR')
 
     try:
         #nypd_crimes_rdd = create_rdd(spark, COLUMNS)
-        nypd_df = create_df(spark, COLUMNS).cache()
-        cross_district_crimes(nypd_df)
+        nypd_df = create_df(spark).cache()
+        #pd = nypd_df1.select('SUSP_AGE_GROUP').distinct().collect()
+        #print(pd)
+        #cross_district_crimes(nypd_df)
         cross_district_races(nypd_df)
+        #cross_age_race(nypd_df)
         #crime_age(nypd_df)
-        #scat_age_race(nypd_df)
-        #crime_race(nypd_df)
+        crime_race(nypd_df)
+
     except Exception as e:
         print(e)
         spark.stop()
