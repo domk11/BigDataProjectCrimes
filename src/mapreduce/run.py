@@ -75,7 +75,6 @@ def process_results():
 
 
 def run():
-    """
     copy_file_hdfs(f'{LOCAL_PATH_CENSUS}/{INPUT_FOLDER}/')
     copy_file_hdfs(f'{LOCAL_PATH_CRIME}/{INPUT_FOLDER}/')
 
@@ -86,7 +85,7 @@ def run():
 
     run_job(CENSUS_MAPPER_PATH, CENSUS_REDUCER_PATH, f'{INPUT_FOLDER}/{INPUT_CENSUS}', OUTPUT_CENSUS)
     run_job(CRIME_MAPPER_PATH, CRIME_REDUCER_PATH, f'{INPUT_FOLDER}/{INPUT_CRIME}', OUTPUT_CRIME)
-    """
+
     process_results()
 
 
