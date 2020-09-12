@@ -1,4 +1,5 @@
 from .ops_nypd import NypdOpsMixin
+from .ops_census import CensusOpsMixin
 
 
 class _DbBase(object):
@@ -8,6 +9,7 @@ class _DbBase(object):
 
 class Database(
         NypdOpsMixin,
+        CensusOpsMixin,
         _DbBase):
 
     def __init__(self, db_connection):
