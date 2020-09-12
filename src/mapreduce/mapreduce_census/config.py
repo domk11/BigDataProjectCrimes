@@ -1,6 +1,5 @@
 # use the ny_census collection extracted in csv format
 
-
 SEPARATOR = '\t'
 
 POP = 'RESPOP'
