@@ -45,10 +45,14 @@ def create_dict(results):
     return {k: int(v) for (k, v) in values}
 
 
-def plot_figure(data, filename):
+def plot_figure(data, filename, title, ylabel):
+    plt.rcParams['figure.figsize'] = [24, 8]
     plt.figure()
+    plt.title(title)
     plt.bar(range(len(data)), list(data.values()), align='center')
     plt.xticks(range(len(data)), list(data.keys()))
+    plt.xlabel('Race')
+    plt.ylabel(ylabel)
     plt.savefig(filename)
 
 
@@ -65,12 +69,13 @@ def process_results():
             if census_key == crime_key:
                 results[census_key] = (crime_value / census_value) * 100
 
-    plot_figure(census_dict, 'census.png')
-    plot_figure(crime_dict, 'crime.png')
-    plot_figure(results, 'results.png')
+    plot_figure(census_dict, 'census.png', 'New York census by race', 'Count')
+    plot_figure(crime_dict, 'crime.png', 'New York crimes by race', 'Count')
+    plot_figure(results, 'results.png', 'New York ratio of crimes by population race', 'Percentage (%)')
 
 
 def run():
+    """
     copy_file_hdfs(f'{LOCAL_PATH_CENSUS}/{INPUT_FOLDER}/')
     copy_file_hdfs(f'{LOCAL_PATH_CRIME}/{INPUT_FOLDER}/')
 
@@ -81,7 +86,7 @@ def run():
 
     run_job(CENSUS_MAPPER_PATH, CENSUS_REDUCER_PATH, f'{INPUT_FOLDER}/{INPUT_CENSUS}', OUTPUT_CENSUS)
     run_job(CRIME_MAPPER_PATH, CRIME_REDUCER_PATH, f'{INPUT_FOLDER}/{INPUT_CRIME}', OUTPUT_CRIME)
-
+    """
     process_results()
 
 
