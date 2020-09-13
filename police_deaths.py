@@ -1,11 +1,11 @@
 from src.spark import create_session, create_df
 from src.spark.SparkPDDE import SparkPDDE
-from src.database.contracts import nypd_contract as c
+from src.database.contracts import police_contract as c
 
 
 def main():
 
-    spark = create_session('police_deaths')
+    spark = create_session(c.FILTERED_COLLECTION)
     spark.sparkContext.setLogLevel('ERROR')
 
     try:

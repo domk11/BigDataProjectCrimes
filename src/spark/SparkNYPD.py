@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from utils import *
 import pandas as pd
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
 plt.rcParams['figure.figsize'] = (12, 8)
 
@@ -50,6 +51,13 @@ class SparkNYPD:
 
         pddf = crimes_df.toPandas()
 
+        X = pddf['yearpd'].values.reshape(-1, 1)
+        Y = pddf['count'].values.reshape(-1, 1)
+
+        linear_regressor = LinearRegression()  # create object for the class
+        linear_regressor.fit(X, Y)  # perform linear regression
+        Y_pred = linear_regressor.predict(X)  # make predictions
+
         print(pddf)
 
         if csv_out:
@@ -57,8 +65,8 @@ class SparkNYPD:
 
         if img_out:
             fig, ax = plt.subplots(figsize=(12,8))
-            x = pddf['yearpd']
-            ax.plot(x, pddf['count'], label='Crimes')
+            ax.plot(X, Y, label='Crimes')
+            ax.plot(X, Y_pred, '--', label='Trend')
             ax.set(xlabel=f'Year - 2009-2019',
                    ylabel='Total records',
                    title='Year-on-year crime records')
@@ -128,7 +136,7 @@ class SparkNYPD:
             plt.savefig(img_out)
 
         if csv_out:
-            self._save_csv(grouped_severity_df, csv_out)
+            self._save_csv(grouped_severity_df_pddf, csv_out)
 
         return grouped_severity_df
 

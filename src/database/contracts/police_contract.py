@@ -1,5 +1,5 @@
 COLLECTION_NAME = 'police_deaths'
-# FILTERED_COLLECTION = 'police_deaths'
+FILTERED_COLLECTION = 'police_deaths'
 
 ID = '_id'
 NAME = 'person'
