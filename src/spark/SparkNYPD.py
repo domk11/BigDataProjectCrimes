@@ -7,6 +7,7 @@ from utils import *
 import pandas as pd
 import numpy as np
 
+plt.rcParams['figure.figsize'] = (12, 8)
 
 class SparkNYPD:
 
@@ -55,7 +56,7 @@ class SparkNYPD:
             self._save_csv(pddf, csv_out)
 
         if img_out:
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(12,8))
             x = pddf['yearpd']
             ax.plot(x, pddf['count'], label='Crimes')
             ax.set(xlabel=f'Year - 2009-2019',
@@ -90,6 +91,7 @@ class SparkNYPD:
         print(counts_crime_pddf_top_N)
 
         if img_out:
+            plt.figure(figsize=(12,8))
             counts_crime_pddf_top_N.plot.barh(x=c.OFFENSE_DESCRIPTION, y='count')
             plt.savefig(img_out)
 

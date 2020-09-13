@@ -1,0 +1,11 @@
+COLLECTION_NAME = 'police_deaths'
+# FILTERED_COLLECTION = 'police_deaths'
+
+ID = '_id'
+NAME = 'person'
+DEPARTMENT = 'dept'
+CAUSE = 'cause_short'
+DATE = 'date'
+YEAR = 'year'
+CANINE = 'canine'
+STATE = 'state'
