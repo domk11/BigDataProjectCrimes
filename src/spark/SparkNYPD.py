@@ -230,8 +230,10 @@ class SparkNYPD:
             plt.savefig(img_out)
 
         if csv_out:
-            self._save_csv(gr_grouped_crimes_pddf_day, 'day_' + csv_out)
-            self._save_csv(gr_grouped_crimes_pddf_night, 'night_' + csv_out)
+            filename_without_ext = csv_out[:-4]
+            ext = csv_out[-4]
+            self._save_csv(gr_grouped_crimes_pddf_day, filename_without_ext + '_day' + ext)
+            self._save_csv(gr_grouped_crimes_pddf_night,  filename_without_ext + '_night' + ext)
 
         return grouped_crimes_df
 
