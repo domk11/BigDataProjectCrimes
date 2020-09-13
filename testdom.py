@@ -101,7 +101,7 @@ def cross_age_race(data):
     #data3 = data1.withColumn(c.AGE, F.when((F.col(c.AGE) != '<18') & (F.col(c.AGE) != '18-24') & (F.col(c.AGE) != '25-44') &( F.col(c.AGE) != '45-64') & (F.col(c.AGE) != '65+'), 'UNKNOWN').otherwise(F.col(c.AGE)))
     #data1 = data1.groupby('SUSP_AGE_GROUP').count()
     #dfpd = data3.filter(F.length(F.col(c.RACE)) > 0).toPandas()
-    data3 = toPandas(data3)
+    data3 = toPandas(data3,4)
     df = pd.crosstab(data3.SUSP_RACE, data3.SUSP_AGE_GROUP)
     color = plt.cm.gist_rainbow(np.linspace(0, 1, 10))
 
@@ -109,7 +109,30 @@ def cross_age_race(data):
     plt.title('age vs race', fontweight = 30, fontsize = 20)
 
     plt.xticks(rotation = 90)
-    plt.savefig('crar.png')
+    plt.savefig('crar2.png')
+
+def cross_crime_race(data):
+
+    coldrop = ['_id','CMPLNT_FR_DT','CMPLNT_FR_TM', 'ADDR_PCT_CD', 'KY_CD', 'SUSP_AGE_GROUP', 'CRM_ATPT_CPTD_CD', 'LAW_CAT_CD', 'Latitude', 'Longitude', 'SUSP_SEX']
+    data = data.drop(*coldrop)
+    counts_ofdesc = data.groupby(c.OFFENSE_DESCRIPTION).count()
+    counts_ofdesc = counts_ofdesc.orderBy('count', ascending=False)
+    top5pd = toPandas(counts_ofdesc)
+    top5pd = top5pd[:5]
+    top5list = top5pd['OFNS_DESC'].values.tolist()
+    plt.figure()
+    data1 = data.filter((F.length(F.col(c.RACE)) > 0) & (F.col(c.RACE) != ''))
+    data2 = data1.filter((F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0) & (F.col(c.OFFENSE_DESCRIPTION) != '') & (F.col(c.OFFENSE_DESCRIPTION) != 'false'))
+    data3 = data2.where(F.col(c.OFFENSE_DESCRIPTION).isin(top5list))
+    data3 = toPandas(data3,4)
+    df = pd.crosstab(data3.SUSP_RACE, data3.OFNS_DESC)
+    color = plt.cm.gist_rainbow(np.linspace(0, 1, 10))
+
+    df.div(df.sum(1).astype(float), axis = 0).plot.bar(stacked = True, color = color, figsize = (18, 12))
+    plt.title('CRIMES vs race', fontweight = 30, fontsize = 20)
+
+    plt.xticks(rotation = 90)
+    plt.savefig('crRA.png')
 
 def main():
     spark = create_session(c.FILTERED_COLLECTION)
@@ -118,11 +141,12 @@ def main():
     try:
         #nypd_crimes_rdd = create_rdd(spark, COLUMNS)
         nypd_df = create_df(spark).cache()
+        cross_crime_race(nypd_df)
         #pd = nypd_df1.select('SUSP_AGE_GROUP').distinct().collect()
         #print(pd)
         #cross_district_crimes(nypd_df)
         #cross_district_races(nypd_df)
-        cross_age_race(nypd_df)
+        #cross_age_race(nypd_df)
         #crime_age(nypd_df)
         #crime_race(nypd_df)
 
