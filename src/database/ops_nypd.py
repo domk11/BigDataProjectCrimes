@@ -1,3 +1,6 @@
+# The original dataset can be retrieved from this link
+# https://data.cityofnewyork.us/api/views/qgea-i56i/rows.csv?accessType=DOWNLOAD
+
 from bson import ObjectId
 
 from .contracts import nypd_contract as c
@@ -41,6 +44,10 @@ class NypdOpsMixin:
 
     def put_filtered_data(self, nypd_data):
         return str(self.filtered_nypd.insert_one(nypd_data).inserted_id)
+
+    def get_collection(self):
+        nypd_doc = self.filtered_nypd.find()
+        return (nypd_from_document(nypd) for nypd in nypd_doc)
 
     def get_nypd(self, nypd_id):
         nypd_doc = self.filtered_nypd.find_one({c.ID: ObjectId(nypd_id)})
