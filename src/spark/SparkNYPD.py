@@ -3,6 +3,7 @@ from pyspark import StorageLevel
 from pyspark.sql.types import *
 from src.database.contracts import nypd_contract as c
 import matplotlib.pyplot as plt
+import seaborn as sns
 from utils import *
 import pandas as pd
 import numpy as np
@@ -167,19 +168,17 @@ class SparkNYPD:
         print(crimes_pddf)
 
         if img_out:
-
-            x = np.arange(len(crimes_pddf['yearpd'].unique()))
-            fig, axes = plt.subplots(nrows=3, ncols=3, figsize=(15, 15))
-
-            for boro in boroughs:
-                gr = crimes_pddf[crimes_pddf[c.BOROUGH] == boro]
-                gr = gr[['yearpd', c.LEVEL_OFFENSE, 'count']]
-                print(gr)
-                gr = gr.groupby(by=['yearpd', c.LEVEL_OFFENSE]).sum()
-                print(gr)
-                gr['count'].unstack().plot.bar(ax=axes, stacked=True)
+            fig_dims = (12, 10)
+            fig, ax = plt.subplots(figsize=fig_dims)
+            sns.catplot(x=c.BOROUGH,  # x variable name
+                        y="count",  # y variable name
+                        hue="yearpd",  # elements in each group variable name
+                        data=df,  # dataframe to plot
+                        kind="bar",
+                        height=8.27, aspect=11.7 / 8.27)
 
             plt.xticks(rotation=0)
+
             plt.savefig(img_out)
 
         if csv_out:
