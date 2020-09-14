@@ -1,7 +1,6 @@
 import pyspark.sql.functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import *
-from src.database.contracts import nypd_contract as c
 from random import randint
 
 def get_year(year_str):
@@ -33,28 +32,6 @@ udf_get_year = F.udf(get_year, IntegerType())
 udf_parse_locus = F.udf(parse_locus)
 udf_parse_daynight = F.udf(parse_daynight)
 
-def fix_date_nypd(nypd_df, timeframing=None):
-    # timeframing if not none expects an array like: [lower bound, upper bound]
-    # for example: timeframing = [2009, 2019] to get record from the last 10 years
-    df = nypd_df.filter(
-        (F.length(F.col(c.DATE)) > 0)
-                        )
-
-    df = df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
-           .withColumn('year', F.trunc('date', 'YYYY')) \
-           .withColumn('yearpd', udf_get_year('year')) \
-           .select('*')
-
-    if timeframing:
-
-        if len(timeframing) != 2:
-            return -1
-
-        df = df.where(
-            (F.col('yearpd') >= F.lit(str(timeframing[0]))) & (F.col('yearpd') <= F.lit(str(timeframing[1])))
-        ).select('*')
-
-    return df
 
 
 
