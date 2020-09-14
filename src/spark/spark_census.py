@@ -72,10 +72,11 @@ class SparkCensus:
             boroughs = ['MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND']
             for borough in boroughs:
                 df = race_borough_df.filter(F.col(c.COUNTY) == borough) \
-                                                .sort(F.col(c.RACE)) \
-                                                .drop(c.COUNTY)
+                                    .sort(F.col(c.RACE)) \
+                                    .drop(c.COUNTY)
                 pd = df.toPandas()
                 pd.set_index(c.RACE, inplace=True)
-                pd.plot.pie(y=f'sum({c.POP})', figsize=(13, 13), autopct='%1.1f%%').legend(loc='best')
+                pd.plot.pie(y=f'sum({c.POP})', figsize=(16, 13), autopct='%1.1f%%').legend(loc='best')
+                plt.ylabel('population distribution')
                 plt.title(borough)
                 plt.savefig(f'{borough.lower().replace(" ", "_")}.png')
