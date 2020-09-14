@@ -6,7 +6,9 @@ import matplotlib.pyplot as plt
 from utils import *
 import pandas as pd
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
+plt.rcParams['figure.figsize'] = (12, 8)
 
 class SparkNYPD:
 
@@ -49,15 +51,22 @@ class SparkNYPD:
 
         pddf = crimes_df.toPandas()
 
+        X = pddf['yearpd'].values.reshape(-1, 1)
+        Y = pddf['count'].values.reshape(-1, 1)
+
+        linear_regressor = LinearRegression()  # create object for the class
+        linear_regressor.fit(X, Y)  # perform linear regression
+        Y_pred = linear_regressor.predict(X)  # make predictions
+
         print(pddf)
 
         if csv_out:
             self._save_csv(pddf, csv_out)
 
         if img_out:
-            fig, ax = plt.subplots()
-            x = pddf['yearpd']
-            ax.plot(x, pddf['count'], label='Crimes')
+            fig, ax = plt.subplots(figsize=(12,8))
+            ax.plot(X, Y, label='Crimes')
+            ax.plot(X, Y_pred, '--', label='Trend')
             ax.set(xlabel=f'Year - 2009-2019',
                    ylabel='Total records',
                    title='Year-on-year crime records')
@@ -90,6 +99,7 @@ class SparkNYPD:
         print(counts_crime_pddf_top_N)
 
         if img_out:
+            plt.figure(figsize=(12,8))
             counts_crime_pddf_top_N.plot.barh(x=c.OFFENSE_DESCRIPTION, y='count')
             plt.savefig(img_out)
 
@@ -126,7 +136,7 @@ class SparkNYPD:
             plt.savefig(img_out)
 
         if csv_out:
-            self._save_csv(grouped_severity_df, csv_out)
+            self._save_csv(grouped_severity_df_pddf, csv_out)
 
         return grouped_severity_df
 
@@ -220,8 +230,10 @@ class SparkNYPD:
             plt.savefig(img_out)
 
         if csv_out:
-            self._save_csv(gr_grouped_crimes_pddf_day, 'day_' + csv_out)
-            self._save_csv(gr_grouped_crimes_pddf_night, 'night_' + csv_out)
+            filename_without_ext = csv_out[:-4]
+            ext = csv_out[len(csv_out) -4:]
+            self._save_csv(gr_grouped_crimes_pddf_day, filename_without_ext + '_day' + ext)
+            self._save_csv(gr_grouped_crimes_pddf_night,  filename_without_ext + '_night' + ext)
 
         return grouped_crimes_df
 
@@ -320,3 +332,5 @@ class SparkNYPD:
             self._save_csv(df, csv_out)
 
         return crimes_df
+
+

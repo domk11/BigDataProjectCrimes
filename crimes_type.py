@@ -1,5 +1,6 @@
 from src.spark import create_session, create_df
 from src.spark.SparkNYPD import SparkNYPD
+from src.database.contracts import nypd_contract as c
 
 
 def main():
@@ -43,7 +44,7 @@ def main():
     except Exception as e:
         print(e)
     finally:
-        sc.stop()
+        spark.sparkContext.stop()
 
 
 if __name__ == '__main__':
