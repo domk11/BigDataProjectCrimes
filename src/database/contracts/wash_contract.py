@@ -1,0 +1,13 @@
+COLLECTION_NAME = 'shooting_wash'
+
+ID = 'id'
+DATE = 'date'
+DEATH_MANNER = 'manner_of_death'
+ARMED = 'armed'
+AGE = 'age'
+RACE = 'race'
+SEX = 'gender'
+CITY = 'city'
+STATE = 'state'
+THREAT_LEVEL = 'threat_level'
+BODYCAM = 'body_camera'

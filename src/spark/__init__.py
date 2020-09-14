@@ -31,4 +31,4 @@ def create_df(spark):
 
 
 def create_rdd(spark, columns=None):
-    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns).rdd
+    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().limit(500).select(columns).rdd
