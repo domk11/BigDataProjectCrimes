@@ -51,6 +51,16 @@ def get_month(month_str):
     return int(str(month_str).split('-')[1])
 udf_get_month = udf(get_month, IntegerType())
 
+def convert_race(race):
+    return {
+        'W':'White',
+        'B':'Black',
+        'N':'Native American',
+        'H':'Hispanic',
+        'A':'Asian',
+        'O':'Others'
+    }.get(race)
+
 def mkfeature(data):
     df = data.select(c.ID, c.DATE,c.RACE,c.AGE,c.STATE, c.ARMED, c.FLEE)
     #shoot = toPandas(df)
@@ -62,6 +72,7 @@ def mkfeature(data):
     shoot= shoot.withColumn('month_num', udf_get_month('date'))
     print(shoot.head())
     #shoot['race_name']=np.where(shoot['race']=='W','White',np.where(shoot['race']=='B','Black', np.where(shoot['race']=='N','Native American',np.where(shoot['race']=='H','Hispanic', np.where(shoot['race']=='A','Asian',np.where(shoot['race']=='O','Others','Not Specified'))))))
+    convert_race(c.RACE)
     return shoot
 
 def convert_date(date):
@@ -196,6 +207,8 @@ def races(shoot):
 
 def crimesperstate(shoot):
     shoot_state=shoot['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'}).sort_values(by='count',ascending=False)
+    #TODO spark
+
     fig = go.Figure(go.Bar(
         y= shoot_state['state'].sort_index(ascending=False),
         x= shoot_state['count'].sort_index(ascending=False),
@@ -330,7 +343,7 @@ def main():
         wpsdf = create_df(spark).cache()
         wpf = wpsdf.select(c.ID, c.DATE,c.RACE,c.AGE,c.ARMED,c.BODYCAM,c.DEATH_MANNER,c.CITY,c.THREAT_LEVEL,c.SEX,c.STATE, c.FLEE)
         shoot = mkfeature(wpf)
-        monthly_df = monthly(shoot)
+        #monthly_df = monthly(shoot)
         #yearly(monthly_df)
         #kills_per_year(shoot)
         #agehist(shoot)
