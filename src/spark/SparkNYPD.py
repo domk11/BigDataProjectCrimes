@@ -231,7 +231,7 @@ class SparkNYPD:
 
         if csv_out:
             filename_without_ext = csv_out[:-4]
-            ext = csv_out[-4]
+            ext = csv_out[len(csv_out) -4:]
             self._save_csv(gr_grouped_crimes_pddf_day, filename_without_ext + '_day' + ext)
             self._save_csv(gr_grouped_crimes_pddf_night,  filename_without_ext + '_night' + ext)
 
