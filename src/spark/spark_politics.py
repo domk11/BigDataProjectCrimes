@@ -50,7 +50,6 @@ class SparkPolitics:
                 autocolorscale=False,
                 text=polls_pd[c.STATE],
                 marker_line_color='white',
-                colorbar_title='USA-polls',
                 showscale=False
             ))
             fig.update_layout(
@@ -59,6 +58,6 @@ class SparkPolitics:
                 geo=dict(
                     scope='usa',
                     projection=go.layout.geo.Projection(type='albers usa')
-                ),
+                )
             )
             fig.write_image('us_polls.png')
