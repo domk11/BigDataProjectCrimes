@@ -1,3 +1,8 @@
+# Just for test with PySpark MLib not really useful for the abalysis
+#
+#
+
+
 from src.spark import create_session, create_df
 from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml.feature import OneHotEncoderEstimator, OneHotEncoder
