@@ -38,6 +38,13 @@ def main():
         ny.crimes_cross_districts_race(img_out=output_base + 'crimes_districts_race.png',
                                        csv_out=output_base + 'crimes_districts_race.csv')
 
+        ny.cross_age_race(img_out=output_base + 'crimes_cross_age_race.png',
+                          csv_out=output_base + 'crimes_cross_age_race.csv')
+
+        ny.cross_crime_race(img_out=output_base + 'crimes_cross_crime_race.png',
+                            csv_out=output_base + 'crimes_cross_crime_race.csv')
+
+
         print("Done")
 
     except Exception as e:
