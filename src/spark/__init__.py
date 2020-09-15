@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession
 from .schema import SCHEMA, COLUMNS, OFFENSE_LEVELS
 from .filter import Filter
 from .spark_census import SparkCensus
+from .spark_politics import SparkPolitics
 
 
 MONGO_URI = 'mongodb://localhost:27017/datascience'
