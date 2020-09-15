@@ -253,6 +253,7 @@ def flee(shoot):
 
 def armedornot(shoot):
     convert = udf(convert_armed)
+    shoot = shoot.filter(col('state')=='NY')
     arm_df=shoot.select('armed', 'race_name').na.drop(subset=["armed"]).na.drop(subset=["race_name"])
     arm_df=arm_df.withColumn('armed', convert('armed')).groupby('race_name','armed').count()
     arm_df1 = arm_df.filter(col('armed') == 'armed')
@@ -260,17 +261,21 @@ def armedornot(shoot):
     fig = go.Figure(data=[go.Pie(labels=arm_dfpd['race_name'], values=arm_dfpd['count'], hole=.3,textinfo='label+percent',
                             insidetextorientation='radial')])
     fig.update_layout(title_text='armed or not', title_x=0.5)
-    fig.write_image('armed.png')
+    fig.write_image('armedny.png')
     arm_df2 = arm_df.filter(col('armed') == 'unarmed')
     arm_dfpd=toPandas(arm_df2)
     fig = go.Figure(data=[go.Pie(labels=arm_dfpd['race_name'], values=arm_dfpd['count'], hole=.3,textinfo='label+percent',
                                  insidetextorientation='radial')])
     fig.update_layout(title_text='armed or not', title_x=0.5)
-    fig.write_image('armednot.png')
+    fig.write_image('armednotny.png')
 
 def blacklivesmatter(shoot):
-    black_state=shoot[shoot['race']=='B']['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'})
-    black_year=shoot[shoot['race']=='B']['year'].value_counts().to_frame().reset_index().rename(columns={'index':'year','year':'count'})
+    #black_state=shoot[shoot['race']=='B']['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'})
+    #black_year=shoot[shoot['race']=='B']['year'].value_counts().to_frame().reset_index().rename(columns={'index':'year','year':'count'})
+    black=shoot.filter(col('race')=='B')
+    black_state=black.select('race','state').groupby('state').count().toPandas()
+    black_year=black.select('race','year').groupby('year').count().toPandas()
+    shoota=shoot.select('race','age').toPandas()
     fig = make_subplots(
         rows=2, cols=2, subplot_titles=("Black People victims in each states", "Yearly Black Victims", "Distribution of Black people Age",),
         column_widths=[0.6, 0.4],
@@ -298,8 +303,8 @@ def blacklivesmatter(shoot):
         name="Death by year"
     ),row=1, col=2)
 
-    fig.add_trace(go.Histogram(x=shoot[shoot['race']=='B']["age"],nbinsx=10,marker_color='brown',name="Age Distribution",xbins=dict(size=10),
-                               opacity=1),row=2, col=2)
+    fig.add_trace(go.Histogram(x=shoota[shoota['race']=='B']["age"],nbinsx=10,marker_color='brown',name="Age Distribution",xbins=dict(size=10),
+                              opacity=1),row=2, col=2)
 
     fig.update_layout(
         title_text='US Police Killing Black Peoples (2015-2020)',
@@ -313,12 +318,17 @@ def blacklivesmatter(shoot):
 
     fig.update_layout(
         template="plotly_dark",showlegend=False)
-    fig.write_image('blacklivesmatter.png')
+    fig.write_image('blacklivesmattersp.png')
 
 def allrace(shoot):
-    year_shoot=shoot['year'].value_counts().to_frame().reset_index().rename(columns={'index':'year','year':'count'}).sort_values(by="year")
-    shoot_state=shoot['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'}).sort_values(by='count',ascending=False)
-    only_race=shoot[shoot['race_name']!="Not Specified"]['race_name'].value_counts().to_frame().reset_index().rename(columns={'index':'race_name','race_name':'count'})
+    #year_shoot=shoot['year'].value_counts().to_frame().reset_index().rename(columns={'index':'year','year':'count'}).sort_values(by="year")
+   # shoot_state=shoot['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'}).sort_values(by='count',ascending=False)
+   # only_race=shoot[shoot['race_name']!="Not Specified"]['race_name'].value_counts().to_frame().reset_index().rename(columns={'index':'race_name','race_name':'count'})
+    year_shoot=shoot.select('year').groupby('year').count().toPandas()
+    shoot_state=shoot.select('state').groupby('state').count().toPandas()
+    shootb=shoot.filter(col('race_name')!='Others')
+    only_race=shootb.select('race_name').groupby('race_name').count().toPandas()
+
     fig = make_subplots(
         rows=2, cols=2, subplot_titles=("Victims in all states", "Victims by Year", "Victims by Race",),
         column_widths=[0.6, 0.4],
@@ -360,7 +370,7 @@ def allrace(shoot):
     )
     fig.update_layout(
         template="plotly_dark")
-    fig.write_image('allstateraces.png')
+    fig.write_image('allstateracessp.png')
 
 def main():
     spark = create_session(c.COLLECTION_NAME)
@@ -378,10 +388,10 @@ def main():
         #races(shoot)
         #crimesperstate(shoot)
         #armed(shoot)
-        armedornot(shoot)
+        #armedornot(shoot)
         #flee(shoot)
         #blacklivesmatter(shoot)
-        #allrace(shoot)
+        allrace(shoot)
 
     except Exception as e:
         print(e)
