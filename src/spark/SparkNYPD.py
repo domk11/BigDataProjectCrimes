@@ -23,7 +23,8 @@ class SparkNYPD:
         self.nypd_df = self.nypd_df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
                                    .withColumn('yearpd', udf_get_year('date')) \
                                    .withColumn('day_night', udf_parse_daynight(c.TIME).cast("int")) \
-                                   .withColumn(c.RACE, F.when(F.col(c.RACE) == '', 'UNKNOWN').otherwise(F.col(c.RACE)))
+                                   .withColumn(c.RACE, F.when(F.col(c.RACE) == '', 'UNKNOWN').otherwise(F.col(c.RACE))) \
+                                   .withColumn(c.AGE, F.when(F.col(c.AGE) == '', 'UNKNOWN').otherwise(F.col(c.AGE)))
 
         # trigger the cache
         self.nypd_df.persist(StorageLevel.MEMORY_AND_DISK).count()
@@ -372,9 +373,7 @@ class SparkNYPD:
 
         nypd_df = nypd_df.filter(F.length(F.col(c.AGE)) > 0)
 
-        crime_age_groups = nypd_df.withColumn(
-            c.AGE, F.when(F.col(c.AGE) == '', 'UNKNOWN').otherwise(F.col(c.AGE))
-        ).groupBy(c.AGE).count()
+        crime_age_groups = nypd_df.groupBy(c.AGE).count()
 
         crime_age_counts = crime_age_groups.orderBy('count', ascending=False)
 
