@@ -65,14 +65,13 @@ def mkfeature(data):
     df = data.select(c.ID, c.DATE,c.RACE,c.AGE,c.STATE, c.ARMED, c.FLEE)
     #shoot = toPandas(df)
     func =  udf(lambda x: datetime.datetime.strptime(x, '%Y-%m-%d'), DateType())
-
+    convert = udf(convert_race)
     shoot = df.withColumn('date', func(col('date')))
     shoot =shoot.withColumn('year', udf_get_year('date'))
     shoot =shoot.withColumn('month', udf_get_month('date'))
     shoot= shoot.withColumn('month_num', udf_get_month('date'))
-    print(shoot.head())
     #shoot['race_name']=np.where(shoot['race']=='W','White',np.where(shoot['race']=='B','Black', np.where(shoot['race']=='N','Native American',np.where(shoot['race']=='H','Hispanic', np.where(shoot['race']=='A','Asian',np.where(shoot['race']=='O','Others','Not Specified'))))))
-    convert_race(c.RACE)
+    shoot=shoot.withColumn('race_name', convert(c.RACE))
     return shoot
 
 def convert_date(date):
@@ -81,12 +80,18 @@ def convert_date(date):
     month= date.strftime('%m')
     return f'{year}-{month}'
 
+def convert_armed(armed):
+    if armed != 'unarmed':
+        return 'armed'
+    else:
+        return 'unarmed'
+
 def monthly(data):
 
     convert = udf(convert_date)
 
     monthly_df = data.select(c.DATE).withColumn(c.DATE,convert(c.DATE)).groupby(c.DATE).count().sort(col(c.DATE))
-    monthly_df.show()
+    #monthly_df.show()
     monthly_df = toPandas(monthly_df)
 
     month_year=[]
@@ -138,8 +143,10 @@ def yearly(monthly_df):
     #fig.write_image('yearly.png')
 
 def kills_per_year(data):
-    year_shoot=data['year'].value_counts().to_frame().reset_index().rename(columns={'index':'year','year':'count'}).sort_values(by="year")
-    #TODO fare con spark
+
+    year_shoot = data.select('year').groupby('year').count().sort(col('year'))
+
+    year_shoot=toPandas(year_shoot)
 
     fig = go.Figure(data=go.Scatter(
         x= year_shoot['year'],
@@ -151,7 +158,7 @@ def kills_per_year(data):
     fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
     fig.update_layout(title_text='Deaths - All Years',xaxis_title='Years',
                   yaxis_title='Total number of kills', title_x=0.5)
-    fig.write_image('killsyear.png')
+    fig.write_image('killsyearsp.png')
 
 def agehist(shoot):
     hist_data = [shoot['age'].dropna()]
@@ -170,9 +177,11 @@ def plot_month_race(shoot_race, race,color):
                  name=race,marker_color=color)
     return trace
 def races(shoot):
-    shoot_race=shoot.groupby(['year','month_num','race_name']).agg('count')['id'].to_frame(name='count').reset_index()
-    #TODO spark
+    #shoot_race=shoot.groupby(['year','month_num','race_name']).agg('count')['id'].to_frame(name='count').reset_index()
 
+    shoot_race=shoot.groupby(['year','month_num','race_name']).count()
+    shoot_race.head()
+    shoot_race=toPandas(shoot_race)
     shoot_race['monthly']=shoot_race['year'].astype(str)+"-"+shoot_race['month_num'].astype(str)
 
     fig = make_subplots(rows=3, cols=2,subplot_titles=("Black", "White","Hispanic","Asian","Native American","Others"))
@@ -206,22 +215,24 @@ def races(shoot):
     fig.write_image('racetoll.png')
 
 def crimesperstate(shoot):
-    shoot_state=shoot['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'}).sort_values(by='count',ascending=False)
-    #TODO spark
+
+    shoot_state=shoot.select('state').groupby('state').count().sort(col('count'))
+
+    shoot_state=toPandas(shoot_state)
 
     fig = go.Figure(go.Bar(
-        y= shoot_state['state'].sort_index(ascending=False),
-        x= shoot_state['count'].sort_index(ascending=False),
+        y= shoot_state['state'],
+        x= shoot_state['count'],
         orientation='h',
-        text=shoot_state['count'].sort_index(ascending=False),
+        text=shoot_state['count'],
         textposition='outside',
-        marker_color=shoot_state['count'].sort_index(ascending=False),
+        marker_color=shoot_state['count'],
     ))
     fig.update_xaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
     fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
     fig.update_layout(title_text='Fatal Killing - All States',yaxis_title='States',
                   xaxis_title='Total number of victims', title_x=0.5,height=1000)
-    fig.write_image('crimesperstate.png')
+    fig.write_image('crimesperstatesp.png')
 
 def armed(shoot):
     armed=list(shoot['armed'].dropna().unique())
@@ -239,6 +250,23 @@ def flee(shoot):
                                  insidetextorientation='radial')])
     fig.update_layout(title_text='Victim Flee?', title_x=0.5)
     fig.write_image('flee.png')
+
+def armedornot(shoot):
+    convert = udf(convert_armed)
+    arm_df=shoot.select('armed', 'race_name').na.drop(subset=["armed"]).na.drop(subset=["race_name"])
+    arm_df=arm_df.withColumn('armed', convert('armed')).groupby('race_name','armed').count()
+    arm_df1 = arm_df.filter(col('armed') == 'armed')
+    arm_dfpd=toPandas(arm_df1)
+    fig = go.Figure(data=[go.Pie(labels=arm_dfpd['race_name'], values=arm_dfpd['count'], hole=.3,textinfo='label+percent',
+                            insidetextorientation='radial')])
+    fig.update_layout(title_text='armed or not', title_x=0.5)
+    fig.write_image('armed.png')
+    arm_df2 = arm_df.filter(col('armed') == 'unarmed')
+    arm_dfpd=toPandas(arm_df2)
+    fig = go.Figure(data=[go.Pie(labels=arm_dfpd['race_name'], values=arm_dfpd['count'], hole=.3,textinfo='label+percent',
+                                 insidetextorientation='radial')])
+    fig.update_layout(title_text='armed or not', title_x=0.5)
+    fig.write_image('armednot.png')
 
 def blacklivesmatter(shoot):
     black_state=shoot[shoot['race']=='B']['state'].value_counts().to_frame().reset_index().rename(columns={'index':'state','state':'count'})
@@ -350,6 +378,7 @@ def main():
         #races(shoot)
         #crimesperstate(shoot)
         #armed(shoot)
+        armedornot(shoot)
         #flee(shoot)
         #blacklivesmatter(shoot)
         #allrace(shoot)
