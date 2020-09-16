@@ -1,5 +1,6 @@
 from src.spark import create_session, create_df
 from src.spark.SparkNYPD import SparkNYPD
+from src.database.contracts import nypd_contract as c
 
 
 def main():
@@ -22,9 +23,8 @@ def main():
         ny.crimes_severity(img_out=output_base + 'crimes_severity.png',
                            csv_out=output_base + 'crimes_severity.csv')
 
-        # TODO: fix error in plot
-        # ny.crimes_severity_by_district(img_out=output_base + 'crimes_severity_by_district.png',
-        #                                csv_out=output_base + 'crimes_severity_by_district.csv')
+        ny.crimes_severity_by_district(img_out=output_base + 'crimes_severity_by_district.png',
+                                       csv_out=output_base + 'crimes_severity_by_district.csv')
 
         ny.crimes_day_night(img_out=output_base + 'crimes_daynight.png',
                             csv_out=output_base + 'crimes_daynight.csv')
@@ -38,12 +38,19 @@ def main():
         ny.crimes_cross_districts_race(img_out=output_base + 'crimes_districts_race.png',
                                        csv_out=output_base + 'crimes_districts_race.csv')
 
+        ny.cross_age_race(img_out=output_base + 'crimes_cross_age_race.png',
+                          csv_out=output_base + 'crimes_cross_age_race.csv')
+
+        ny.cross_crime_race(img_out=output_base + 'crimes_cross_crime_race.png',
+                            csv_out=output_base + 'crimes_cross_crime_race.csv')
+
+
         print("Done")
 
     except Exception as e:
         print(e)
     finally:
-        sc.stop()
+        spark.sparkContext.stop()
 
 
 if __name__ == '__main__':
