@@ -30,7 +30,10 @@ class SparkPDDE:
         # trigger the cache
         self.pdde_df.persist(StorageLevel.MEMORY_AND_DISK).count()
 
-    def deaths_cause_topN(self, n=10, df=None, img_out=None, cache=False):
+    def _save_csv(self, df, csv_out):
+        df.to_csv(csv_out)
+
+    def deaths_cause_topN(self, n=10, df=None, img_out=None, csv_out=None, cache=False):
 
         pdde_df = self.pdde_df
 
@@ -54,6 +57,9 @@ class SparkPDDE:
 
         print(counts_deaths_pddf_top_N)
 
+        if csv_out:
+            self._save_csv(counts_deaths_pddf_top_N, csv_out)
+
         if img_out:
             counts_deaths_pddf_top_N.plot.barh(x=c.CAUSE, y='count')
             plt.xlabel('Most frequent causes of deaths in policemen')
@@ -62,7 +68,7 @@ class SparkPDDE:
 
         return counts_deaths_pddf_top_N
 
-    def deaths_states_topN(self, n=5, df=None, img_out=None, cache=False):
+    def deaths_states_topN(self, n=5, df=None, img_out=None, csv_out=None, cache=False):
 
         pdde_df = self.pdde_df
 
@@ -86,6 +92,10 @@ class SparkPDDE:
 
         print(counts_deaths_pddf_top_N)
 
+        if csv_out:
+            self._save_csv(counts_deaths_pddf_top_N, csv_out)
+
+
         if img_out:
             counts_deaths_pddf_top_N.plot.barh(x=c.STATE, y='count')
             plt.xlabel('States with more deaths in Police')
@@ -95,7 +105,7 @@ class SparkPDDE:
         return counts_deaths_pddf_top_N
 
 
-    def deaths_trend(self, df=None, img_out=None, cache=False):
+    def deaths_trend(self, df=None, img_out=None, csv_out=None, cache=False):
 
         pdde_df = self.pdde_df
 
@@ -116,6 +126,9 @@ class SparkPDDE:
         Y_pred = linear_regressor.predict(X)  # make predictions
 
         print(pddf)
+
+        if csv_out:
+            self._save_csv(pddf, csv_out)
 
         if img_out:
             fig, ax = plt.subplots()

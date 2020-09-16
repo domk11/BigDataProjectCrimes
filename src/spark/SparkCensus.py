@@ -31,7 +31,6 @@ def _convert_county(county):
         'Richmond County': 'STATEN ISLAND'
     }.get(county)
 
-
 class SparkCensus:
 
     def __init__(self, census_df):
@@ -49,7 +48,7 @@ class SparkCensus:
     def show_df(self, df, limit=20):
         df.show(limit)
 
-    def race_by_borough(self, img_out=False, csv_out=None, cache=False):
+    def race_by_borough(self, img_out=None, csv_out=None, cache=False):
         census_df = self.census_df
 
         if cache:
@@ -66,7 +65,7 @@ class SparkCensus:
         race_borough_df = race_county_df.withColumn(c.COUNTY, convert(c.COUNTY))
 
         if csv_out:
-            self._save_csv(race_county_df, csv_out)
+            self._save_csv(race_borough_df, csv_out)
 
         if img_out:
             boroughs = ['MANHATTAN', 'BROOKLYN', 'QUEENS', 'BRONX', 'STATEN ISLAND']
@@ -79,4 +78,4 @@ class SparkCensus:
                 pd.plot.pie(y=f'sum({c.POP})', figsize=(16, 13), autopct='%1.1f%%').legend(loc='best')
                 plt.ylabel('population distribution')
                 plt.title(borough)
-                plt.savefig(f'{borough.lower().replace(" ", "_")}.png')
+                plt.savefig(img_out + f'{borough.lower().replace(" ", "_")}.png')
