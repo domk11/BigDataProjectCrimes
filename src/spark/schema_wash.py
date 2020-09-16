@@ -10,7 +10,4 @@ SCHEMA = StructType([StructField(c.ID, StringType()),
                      StructField(c.SEX, StringType())])
 
 
-COLUMNS = [c.ID, c.DATE,  c.AGE, c.RACE, c.SEX]
-
-
-
+COLUMNS = [c.ID, c.DATE, c.AGE, c.RACE, c.SEX]

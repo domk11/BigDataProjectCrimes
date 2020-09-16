@@ -8,6 +8,7 @@ from .schema import SCHEMA, COLUMNS, OFFENSE_LEVELS
 from .filter import Filter
 from .spark_census import SparkCensus
 from .spark_politics import SparkPolitics
+from .spark_shoots import SparkShoots
 
 
 MONGO_URI = 'mongodb://localhost:27017/datascience'

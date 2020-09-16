@@ -1,15 +1,18 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
 import pyspark.sql.functions as F
 from pyspark import StorageLevel
 from pyspark.sql.types import *
+
 from src.database.contracts import nypd_contract as c
-import matplotlib.pyplot as plt
-import seaborn as sns
 from utils import *
-import pandas as pd
-import numpy as np
-from sklearn.linear_model import LinearRegression
+
 
 plt.rcParams['figure.figsize'] = (12, 8)
+
 
 class SparkNYPD:
 
@@ -22,7 +25,7 @@ class SparkNYPD:
     def _preprocess(self):
         self.nypd_df = self.nypd_df.withColumn('date', F.to_date(c.DATE, 'MM/dd/yyyy')) \
                                    .withColumn('yearpd', udf_get_year('date')) \
-                                   .withColumn('day_night', udf_parse_daynight(c.TIME).cast("int")) \
+                                   .withColumn('day_night', udf_parse_daynight(c.TIME).cast('int')) \
                                    .withColumn(c.RACE, F.when(F.col(c.RACE) == '', 'UNKNOWN').otherwise(F.col(c.RACE))) \
                                    .withColumn(c.AGE, F.when(F.col(c.AGE) == '', 'UNKNOWN').otherwise(F.col(c.AGE)))
 
@@ -30,29 +33,10 @@ class SparkNYPD:
         self.nypd_df.persist(StorageLevel.MEMORY_AND_DISK).count()
 
     def _save_csv(self, df, csv_out):
-        #df.coalesce(1).write.option("header", "true").option("sep", ",").mode("overwrite").csv(csv_out)
+        #df.coalesce(1).write.option('header', 'true').option('sep', ',').mode('overwrite').csv(csv_out)
         df.to_csv(csv_out)
 
-    def _map_to_pandas(self, rdds):
-        """ Needs to be here due to pickling issues """
-        return [pd.DataFrame(list(rdds))]
-
-    def toPandas(self, df, n_partitions=None):
-        """
-        Returns the contents of `df` as a local `pandas.DataFrame` in a speedy fashion. The DataFrame is
-        repartitioned if `n_partitions` is passed.
-        :param df:              pyspark.sql.DataFrame
-        :param n_partitions:    int or None
-        :return:                pandas.DataFrame
-        """
-        if n_partitions is not None: df = df.repartition(n_partitions)
-        df_pand = df.rdd.mapPartitions(self._map_to_pandas).collect()
-        df_pand = pd.concat(df_pand)
-        df_pand.columns = df.columns
-        return df_pand
-
     def crimes_trend(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -87,7 +71,7 @@ class SparkNYPD:
             fig, ax = plt.subplots(figsize=(12,8))
             ax.plot(X, Y, label='Crimes')
             ax.plot(X, Y_pred, '--', label='Trend')
-            ax.set(xlabel=f'Year - 2009-2019',
+            ax.set(xlabel='Year - 2009-2019',
                    ylabel='Total records',
                    title='Year-on-year crime records')
             ax.grid(b=True, which='both', axis='y')
@@ -97,13 +81,14 @@ class SparkNYPD:
         return crimes_df
 
     def crimes_top(self, df=None, n=20, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
+
         if df:
             nypd_df = df
 
         if cache:
             nypd_df = nypd_df.persist()
+
         # data cleaning:
         # filter rows without a OFFENSE_DESCRIPTION
         df = nypd_df.filter(F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
@@ -119,7 +104,7 @@ class SparkNYPD:
         print(counts_crime_pddf_top_N)
 
         if img_out:
-            plt.figure(figsize=(12,8))
+            plt.figure(figsize=(12, 8))
             counts_crime_pddf_top_N.plot.barh(x=c.OFFENSE_DESCRIPTION, y='count')
             plt.savefig(img_out)
 
@@ -129,7 +114,6 @@ class SparkNYPD:
         return crime_type_counts
 
     def crimes_severity(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -137,6 +121,7 @@ class SparkNYPD:
 
         if cache:
             nypd_df = nypd_df.persist()
+
         # analyze crimes severity over years
         nypd_df = nypd_df.filter(F.length(F.col(c.LEVEL_OFFENSE)) > 0)
 
@@ -151,7 +136,7 @@ class SparkNYPD:
             plt.figure()
             grouped_severity_df_pddf['count'].unstack().plot.bar()
             plt.xticks(rotation=0)
-            plt.ylabel("Counts")
+            plt.ylabel('Counts')
             plt.xlabel('Crimes severity year-on-year')
             plt.savefig(img_out)
 
@@ -161,7 +146,6 @@ class SparkNYPD:
         return grouped_severity_df
 
     def crimes_severity_by_district(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -175,8 +159,6 @@ class SparkNYPD:
             (F.length(F.col(c.BOROUGH)) > 0) & (F.col(c.BOROUGH) != 'false')
         )
 
-        # list all boroughs of NY
-        boroughs = ['QUEENS', 'BROOKLYN', 'BRONX', 'STATEN ISLAND', 'MANHATTAN']
         # select only last year
         grouped_crimes_df = crimes_df.select(['yearpd', c.BOROUGH, c.LEVEL_OFFENSE])\
                                      .groupby(['yearpd', c.BOROUGH, c.LEVEL_OFFENSE])\
@@ -190,14 +172,13 @@ class SparkNYPD:
             fig_dims = (12, 10)
             fig, ax = plt.subplots(figsize=fig_dims)
             sns.catplot(x=c.BOROUGH,  # x variable name
-                        y="count",  # y variable name
-                        hue="yearpd",  # elements in each group variable name
+                        y='count',  # y variable name
+                        hue='yearpd',  # elements in each group variable name
                         data=df,  # dataframe to plot
-                        kind="bar",
+                        kind='bar',
                         height=8.27, aspect=11.7 / 8.27)
 
             plt.xticks(rotation=0)
-
             plt.savefig(img_out)
 
         if csv_out:
@@ -206,7 +187,6 @@ class SparkNYPD:
         return grouped_crimes_df
 
     def crimes_day_night(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -233,10 +213,10 @@ class SparkNYPD:
         gr_grouped_crimes_pddf_day = grouped_crimes_pddf_day.groupby(['yearpd']).sum()
         gr_grouped_crimes_pddf_night = grouped_crimes_pddf_night.groupby(['yearpd']).sum()
 
-        print("Day:")
+        print('Day:')
         print(gr_grouped_crimes_pddf_day)
 
-        print("Night:")
+        print('Night:')
         print(gr_grouped_crimes_pddf_night)
 
         if img_out:
@@ -249,7 +229,7 @@ class SparkNYPD:
 
         if csv_out:
             filename_without_ext = csv_out[:-4]
-            ext = csv_out[len(csv_out) -4:]
+            ext = csv_out[len(csv_out) - 4:]
             self._save_csv(gr_grouped_crimes_pddf_day, filename_without_ext + '_day' + ext)
             self._save_csv(gr_grouped_crimes_pddf_night,  filename_without_ext + '_night' + ext)
 
@@ -285,7 +265,6 @@ class SparkNYPD:
         return crime_race_counts
 
     def crimes_cross_districts(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -293,7 +272,6 @@ class SparkNYPD:
 
         if cache:
             nypd_df = nypd_df.persist()
-
 
         crimes_df = nypd_df.filter(
             (F.length(F.col(c.BOROUGH)) > 0) & (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
@@ -320,7 +298,6 @@ class SparkNYPD:
         return crimes_df
 
     def crimes_cross_districts_race(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -332,24 +309,24 @@ class SparkNYPD:
         boroughs = ['QUEENS', 'BROOKLYN', 'BRONX', 'STATEN ISLAND', 'MANHATTAN']
 
         crimes_df = nypd_df.filter(
-                (F.length(F.col(c.BOROUGH)) > 0) & (F.length(F.col(c.RACE)) > 0) &
-                (F.col(c.RACE) != 'UNKNOWN') & (F.col(c.BOROUGH).isin(boroughs))
+            (F.length(F.col(c.BOROUGH)) > 0)
+            & (F.length(F.col(c.RACE)) > 0)
+            & (F.col(c.RACE) != 'UNKNOWN')
+            & (F.col(c.BOROUGH).isin(boroughs))
         )
 
         crimes_df = crimes_df.groupBy(c.BOROUGH, c.RACE).count()
 
         pddf = crimes_df.toPandas()
-
         print(pddf)
+
         if csv_out:
             self._save_csv(pddf, csv_out)
 
         if img_out:
-
             base_name = img_out[:-4]
 
             for borough in boroughs:
-
                 plt.figure()
                 df = crimes_df.filter(F.col(c.BOROUGH) == borough).sort(F.col(c.RACE))
                 _df = df.toPandas()
@@ -357,7 +334,7 @@ class SparkNYPD:
                 _df.plot.pie(y=f'count', figsize=(16, 13), autopct='%1.1f%%').legend(loc='best')
 
                 plt.xticks(rotation=0)
-                plt.title('Criminal ethinicity by district: ' + borough)
+                plt.title('Criminal ethnicity by district: ' + borough)
                 plt.savefig(base_name + '_' + str.lower(borough) + '.png')
 
         return crimes_df
@@ -391,7 +368,6 @@ class SparkNYPD:
         return crime_age_counts
 
     def cross_district_races(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -406,7 +382,7 @@ class SparkNYPD:
             (F.length(F.col(c.BOROUGH)) > 0) & (F.length(F.col(c.RACE)) > 0)
         )
 
-        pddf = self.toPandas(nypd_df)
+        pddf = self_toPandas(nypd_df)
         df = pd.crosstab(pddf.BORO_NM, pddf.SUSP_RACE)
 
         if img_out:
@@ -425,7 +401,6 @@ class SparkNYPD:
         return nypd_df
 
     def cross_district_crimes(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -435,8 +410,10 @@ class SparkNYPD:
             nypd_df = nypd_df.persist()
 
         nypd_df = nypd_df.filter(
-            (F.length(F.col(c.BOROUGH)) > 0) & (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
+            (F.length(F.col(c.BOROUGH)) > 0)
+            & (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
         )
+
         data2 = nypd_df.toPandas()
         df = pd.crosstab(data2.BORO_NM, data2.OFNS_DESC)
 
@@ -456,7 +433,6 @@ class SparkNYPD:
         return nypd_df
 
     def cross_age_race(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -472,7 +448,7 @@ class SparkNYPD:
         nypd_df = nypd_df.filter((F.length(F.col(c.AGE)) > 0) & (F.col(c.AGE) != 'false'))
         nypd_df = nypd_df.where(F.col(c.AGE).isin(age_groups))
 
-        data3 = self.toPandas(nypd_df, 4)
+        data3 = self_toPandas(nypd_df, 4)
         df = pd.crosstab(data3.SUSP_RACE, data3.SUSP_AGE_GROUP)
 
         if img_out:
@@ -491,7 +467,6 @@ class SparkNYPD:
         return nypd_df
 
     def cross_crime_race(self, df=None, img_out=None, csv_out=None, cache=False):
-
         nypd_df = self.nypd_df
 
         if df:
@@ -505,17 +480,20 @@ class SparkNYPD:
                          .count()\
                          .orderBy('count', ascending=False)
 
-        top5pd = self.toPandas(nypd_df)
+        top5pd = self_toPandas(nypd_df)
         top5pd = top5pd[:5]
         top5list = top5pd[c.OFFENSE_DESCRIPTION].values.tolist()
 
         nypd_df = nypd_df.filter(
-            (F.length(F.col(c.RACE)) > 0) & (F.col(c.RACE) != '') &
-            (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0) & (F.col(c.OFFENSE_DESCRIPTION) != '') &
-            (F.col(c.OFFENSE_DESCRIPTION) != 'false')
+            (F.length(F.col(c.RACE)) > 0)
+            & (F.col(c.RACE) != '')
+            & (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
+            & (F.col(c.OFFENSE_DESCRIPTION) != '')
+            & (F.col(c.OFFENSE_DESCRIPTION) != 'false')
         )
         nypd_df = nypd_df.where(F.col(c.OFFENSE_DESCRIPTION).isin(top5list))
-        data3 = self.toPandas(nypd_df, 4)
+
+        data3 = self_toPandas(nypd_df, 4)
         df = pd.crosstab(data3.SUSP_RACE, data3.OFNS_DESC)
 
         if img_out:
@@ -532,4 +510,3 @@ class SparkNYPD:
             self._save_csv(df, csv_out)
 
         return nypd_df
-
