@@ -3,33 +3,7 @@ import pyspark.sql.functions as F
 import matplotlib.pyplot as plt
 
 from src.database.contracts import census_contract as c
-
-
-def _convert_race(race):
-    race = race.split()
-    r = {
-        'American': 'AMERICAN INDIAN/ALASKAN NATIVE',
-        'Asian': 'ASIAN / PACIFIC ISLANDER',
-        'Native': 'ASIAN / PACIFIC ISLANDER'
-    }.get(race[0])
-
-    if race[0] == 'Black':
-        r = 'BLACK HISPANIC' if race[-1] == 'Hispanic' else 'BLACK'
-
-    if race[0] == 'White':
-        r = 'WHITE HISPANIC' if race[-1] == 'Hispanic' else 'WHITE'
-
-    return r
-
-
-def _convert_county(county):
-    return {
-        'New York County': 'MANHATTAN',
-        'Kings County': 'BROOKLYN',
-        'Queens County': 'QUEENS',
-        'Bronx County': 'BRONX',
-        'Richmond County': 'STATEN ISLAND'
-    }.get(county)
+from utils import udf_convert_race_census, udf_convert_county
 
 class SparkCensus:
 
@@ -38,8 +12,7 @@ class SparkCensus:
         self._preprocess()
 
     def _preprocess(self):
-        convert = F.udf(_convert_race)
-        self.census_df = self.census_df.withColumn(c.RACE, convert(c.RACE))
+        self.census_df = self.census_df.withColumn(c.RACE, udf_convert_race_census(c.RACE))
         self.census_df.persist(StorageLevel.MEMORY_AND_DISK).count()
 
     def _save_csv(self, df, csv_out):
@@ -61,8 +34,7 @@ class SparkCensus:
         county = ['New York County', 'Kings County', 'Queens County', 'Bronx County', 'Richmond County']
         race_county_df = race_county_df.filter(F.col(c.COUNTY).isin(county))
 
-        convert = F.udf(_convert_county)
-        race_borough_df = race_county_df.withColumn(c.COUNTY, convert(c.COUNTY))
+        race_borough_df = race_county_df.withColumn(c.COUNTY, udf_convert_county(c.COUNTY))
 
         if csv_out:
             self._save_csv(race_borough_df, csv_out)
