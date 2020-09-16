@@ -14,9 +14,12 @@ def main():
         nypd_df = create_df(spark)
 
         pd = SparkPDDE(nypd_df)
-        pd.deaths_trend(img_out=output_base + 'police_deaths.png')
-        pd.deaths_cause_topN(img_out=output_base + 'police_top_deaths.png')
-        pd.deaths_states_topN(n=10, img_out=output_base + 'police_deaths_state.png')
+        pd.deaths_trend(img_out=output_base + 'police_deaths.png',
+                        csv_out=output_base + 'police_deaths.csv')
+        pd.deaths_cause_topN(img_out=output_base + 'police_top_deaths.png',
+                             csv_out=output_base + 'police_top_deaths.csv')
+        pd.deaths_states_topN(n=10, img_out=output_base + 'police_deaths_state.png',
+                              csv_out=output_base + 'police_deaths_state.csv')
 
         print("Done")
 

@@ -9,10 +9,12 @@ def main():
     spark.sparkContext.setLogLevel('ERROR')
 
     try:
+        output_base = '/home/marco/output/'
+
         census_df = create_df(spark)
         census = SparkCensus(census_df)
 
-        census.race_by_borough(img_out=True)
+        census.race_by_borough(img_out=output_base, csv_out=output_base + 'districts_demo.csv')
     except Exception as e:
         print(e)
     finally:

@@ -6,9 +6,7 @@ from pyspark.sql import SparkSession
 
 from .schema import SCHEMA, COLUMNS, OFFENSE_LEVELS
 from .filter import Filter
-from .spark_census import SparkCensus
-from .spark_politics import SparkPolitics
-from .spark_shoots import SparkShoots
+from .SparkCensus import SparkCensus
 
 
 MONGO_URI = 'mongodb://localhost:27017/datascience'
@@ -34,4 +32,4 @@ def create_df(spark):
 
 
 def create_rdd(spark, columns=None):
-    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().limit(500).select(columns).rdd
+    return spark.read.format('mongo').option('inferSchema', 'false').option('sampleSize', 50000).load().select(columns).rdd
