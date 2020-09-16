@@ -76,7 +76,7 @@ class SparkShoots:
 
     def yearly(self, monthly_df, img_out=False, csv_out=False):
         monthly_df[c.DATE] = pd.to_datetime(monthly_df[c.DATE])
-        monthly_df['year'] = monthly_df['date'].dt.strftime('%Y')
+        monthly_df['year'] = monthly_df[c.DATE].dt.strftime('%Y')
 
         if csv_out:
             self._save_csv(monthly_df, 'yearly.csv')
@@ -118,7 +118,7 @@ class SparkShoots:
             fig.write_image('kills_year_sp.png')
 
     def agehist(self):
-        hist_data = self.shoots_df.select(c.AGE).filter(length(col(c.AGE))>0)
+        hist_data = self.shoots_df.select(c.AGE).filter(length(col(c.AGE)) > 0)
         hist_data = [hist_data.toPandas()[c.AGE].astype(int).dropna()]
         group_labels = ['Age']
         colors = ['blue']
