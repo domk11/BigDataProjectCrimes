@@ -1,12 +1,8 @@
 from pyspark import StorageLevel
-import pyspark.sql.functions as F
 import plotly.graph_objects as go
 
 from src.database.contracts import politics_contract as c
-
-
-def _calculate_winner(rep, dem):
-    return 1 if rep > dem else 0
+from utils import udf_calculate_winner
 
 
 class SparkPolitics:
@@ -16,8 +12,7 @@ class SparkPolitics:
         self._preprocess()
 
     def _preprocess(self):
-        convert = F.udf(_calculate_winner)
-        self.politics_df = self.politics_df.withColumn(c.WINNER, convert(c.REPUBLICAN, c.DEMOCRATIC))
+        self.politics_df = self.politics_df.withColumn(c.WINNER, udf_calculate_winner(c.REPUBLICAN, c.DEMOCRATIC))
         self.politics_df.persist(StorageLevel.MEMORY_AND_DISK).count()
 
     def _save_csv(self, df, csv_out):
@@ -26,7 +21,7 @@ class SparkPolitics:
     def show_df(self, df, limit=20):
         df.show(limit)
 
-    def polls_map(self, img_out=False, csv_out=None, cache=False):
+    def polls_map(self, img_out=False, csv_out=False, path=None, cache=False):
         # red republican -> 1, blue democratic -> 0
         politics_df = self.politics_df
 
@@ -36,7 +31,7 @@ class SparkPolitics:
         polls_df = politics_df.select([c.STATE, c.WINNER])
 
         if csv_out:
-            self._save_csv(polls_df, csv_out)
+            self._save_csv(polls_df, f'{path}/us_polls.csv')
 
         if img_out:
             polls_pd = polls_df.toPandas()
@@ -60,4 +55,4 @@ class SparkPolitics:
                     projection=go.layout.geo.Projection(type='albers usa')
                 )
             )
-            fig.write_image('us_polls.png')
+            fig.write_image(f'{path}/us_polls.png')

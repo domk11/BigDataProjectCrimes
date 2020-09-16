@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 from pyspark import StorageLevel
-from pyspark.sql.functions import *
+from pyspark.sql.functions import length, col
 from pyspark.sql.types import *
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
@@ -31,7 +31,7 @@ class SparkShoots:
     def _save_csv(self, df, csv_out):
         df.to_csv(csv_out)
 
-    def monthly(self, img_out=False, csv_out=False):
+    def monthly(self, img_out=False, csv_out=False, path=None):
         monthly_df = self.shoots_df.select(c.DATE)\
                          .withColumn(c.DATE, udf_convert_date_to_string(c.DATE))\
                          .groupby(c.DATE)\
@@ -42,7 +42,7 @@ class SparkShoots:
         month_year = [str(i) for i in monthly_df[c.DATE]]
 
         if csv_out:
-            self._save_csv(monthly_df, 'monthlysp.csv')
+            self._save_csv(monthly_df, f'{path}/monthlysp.csv')
 
         if img_out:
             fig = make_subplots(
@@ -66,7 +66,7 @@ class SparkShoots:
             fig.update_yaxes(title_text='Number of Victims', row=1, col=1, showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_yaxes(title_text='Number of Victims', row=2, col=1, showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_layout(title_text='Fatal Killing Monthly Count 2015 - 2020', title_x=0.5, showlegend=False, height=1000)
-            fig.write_image('monthlysp.png')
+            fig.write_image(f'{path}/monthlysp.png')
 
         return monthly_df
 
@@ -74,12 +74,12 @@ class SparkShoots:
         temp_month = [str(i) for i in monthly_df.loc[monthly_df['year'] == year][c.DATE]]
         return go.Bar(x=temp_month, y=monthly_df.loc[monthly_df['year'] == year]['count'], name=year, marker_color=color)
 
-    def yearly(self, monthly_df, img_out=False, csv_out=False):
+    def yearly(self, monthly_df, img_out=False, csv_out=False, path=None):
         monthly_df[c.DATE] = pd.to_datetime(monthly_df[c.DATE])
         monthly_df['year'] = monthly_df[c.DATE].dt.strftime('%Y')
 
         if csv_out:
-            self._save_csv(monthly_df, 'yearly.csv')
+            self._save_csv(monthly_df, f'{path}/yearly.csv')
 
         if img_out:
             fig = make_subplots(rows=3, cols=2, subplot_titles=('2015', '2016', '2017', '2018', '2019', '2020'))
@@ -92,9 +92,9 @@ class SparkShoots:
             fig.update_xaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_layout(title_text='Deaths Every Year', title_x=0.5, showlegend=False)
-            fig.write_image('yearly.png')
+            fig.write_image(f'{path}/yearly.png')
 
-    def kills_per_year(self, img_out=False, csv_out=False):
+    def kills_per_year(self, img_out=False, csv_out=False, path=None):
         year_shoot = self.shoots_df.select('year')\
                          .groupby('year')\
                          .count()\
@@ -103,7 +103,7 @@ class SparkShoots:
         year_shoot = self_toPandas(year_shoot)
 
         if csv_out:
-            self._save_csv(year_shoot, 'kills_year_sp.csv')
+            self._save_csv(year_shoot, f'{path}/kills_year_sp.csv')
 
         if img_out:
             fig = go.Figure(data=go.Scatter(
@@ -115,29 +115,28 @@ class SparkShoots:
             fig.update_xaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_layout(title_text='Deaths - All Years', xaxis_title='Years', yaxis_title='Total number of kills', title_x=0.5)
-            fig.write_image('kills_year_sp.png')
+            fig.write_image(f'{path}/kills_year_sp.png')
 
-    def agehist(self):
+    def agehist(self, img_out=False, path=None):
         hist_data = self.shoots_df.select(c.AGE).filter(length(col(c.AGE)) > 0)
         hist_data = [hist_data.toPandas()[c.AGE].astype(int).dropna()]
-        group_labels = ['Age']
-        colors = ['blue']
-        fig = go.Figure()
-        fig = ff.create_distplot(hist_data, group_labels, bin_size=5, colors=colors)
-        fig.update_layout(title_text='Distribution of Age', title_x=0.5)
-        fig.write_image('agehist.png')
+
+        if img_out:
+            fig = ff.create_distplot(hist_data, ['Age'], bin_size=5, colors=['blue'])
+            fig.update_layout(title_text='Distribution of Age', title_x=0.5)
+            fig.write_image(f'{path}/agehist.png')
 
     def plot_month_race(self, shoot_race, race, color):
         temp_month = [str(i) for i in shoot_race.loc[(shoot_race['race_name'] == race)]['monthly']]
         return go.Bar(x=temp_month, y=shoot_race.loc[(shoot_race['race_name'] == race)]['count'], name=race, marker_color=color)
 
-    def races(self, img_out=False, csv_out=False):
+    def races(self, img_out=False, csv_out=False, path=None):
         shoot_race = self.shoots_df.groupby(['year', 'month_num', 'race_name']).count()
         shoot_race = self_toPandas(shoot_race)
         shoot_race['monthly'] = shoot_race['year'].astype(str) + '-' + shoot_race['month_num'].astype(str)
 
         if csv_out:
-            self._save_csv(shoot_race, f'racetoll.csv')
+            self._save_csv(shoot_race, f'{path}/racetoll.csv')
 
         if img_out:
             fig = make_subplots(rows=3, cols=2, subplot_titles=('Black', 'White', 'Hispanic', 'Asian', 'Native American', 'Others'))
@@ -148,7 +147,7 @@ class SparkShoots:
             fig.add_trace(self.plot_month_race(shoot_race, 'Native American', 'orange'), row=3, col=1)
             fig.add_trace(self.plot_month_race(shoot_race, 'Others', 'violet'), row=3, col=2)
             fig.update_layout(title_text='Deaths - All Race', title_x=0.5)
-            fig.write_image('affrace.png')
+            fig.write_image(f'{path}/affrace.png')
 
             fig = go.Figure()
             races = ['Black', 'White', 'Hispanic', 'Asian', 'Native American', 'Others']
@@ -158,9 +157,9 @@ class SparkShoots:
             fig.update_xaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_layout(title='Death Toll - All Races', title_x=0.5, xaxis=dict(title='Race'), yaxis=dict(title='Number of Victims'))
-            fig.write_image('racetoll.png')
+            fig.write_image(f'{path}/racetoll.png')
 
-    def crimes_per_state(self, img_out=False, csv_out=False):
+    def crimes_per_state(self, img_out=False, csv_out=False, path=None):
         shoot_state = self.shoots_df.select(c.STATE)\
                            .groupby(c.STATE)\
                            .count()\
@@ -169,7 +168,7 @@ class SparkShoots:
         shoot_state = self_toPandas(shoot_state)
 
         if csv_out:
-            self._save_csv(shoot_state, 'crimes_per_states.csv')
+            self._save_csv(shoot_state, f'{path}/crimes_per_states.csv')
 
         if img_out:
             fig = go.Figure(go.Bar(
@@ -184,23 +183,26 @@ class SparkShoots:
             fig.update_yaxes(showline=True, linewidth=2, linecolor='black', mirror=True)
             fig.update_layout(title_text='Fatal Killing - All States', yaxis_title='States',
                               xaxis_title='Total number of victims', title_x=0.5, height=1000)
-            fig.write_image('crimes_per_states.png')
+            fig.write_image(f'{path}/crimes_per_states.png')
 
-    def armed(self):
-        armed = self.shoots_df.select('armed').toPandas()
-        armed = list(armed['armed'].dropna().unique())
-        fig, ax = plt.subplots(1, 1, figsize=[17, 10])
-        wc = WordCloud(background_color='black', colormap='OrRd_r', width=600, height=400).generate(' '.join(armed))
-        ax.imshow(wc, interpolation='bilinear')
-        ax.axis('off')
-        ax.set_title('Most Used Arms', fontsize=35)
-        plt.savefig('armed.png')
+    def armed(self, img_out=False, path=None):
+        armed = self.shoots_df.select(c.ARMED).toPandas()
+        armed = list(armed[c.ARMED].dropna().unique())
 
-    def flee(self, img_out=False, csv_out=False):
+        if img_out:
+            fig, ax = plt.subplots(1, 1, figsize=[17, 10])
+            wc = WordCloud(background_color='black', colormap='OrRd_r', width=600, height=400).generate(' '.join(armed))
+            ax.imshow(wc, interpolation='bilinear')
+            ax.axis('off')
+            ax.set_title('Most Used Arms', fontsize=35)
+            plt.savefig(f'{path}/armed.png')
+
+    def flee(self, img_out=False, csv_out=False, path=None):
         arm_df = self.shoots_df.select(c.FLEE).groupby(c.FLEE).count()
         arm_df = self_toPandas(arm_df)
+
         if csv_out:
-            self._save_csv(arm_df, 'flee.csv')
+            self._save_csv(arm_df, f'{path}/flee.csv')
 
         if img_out:
             fig = go.Figure(data=[
@@ -213,9 +215,9 @@ class SparkShoots:
                 )
             ])
             fig.update_layout(title_text='Victim Flee?', title_x=0.5)
-            fig.write_image('flee.png')
+            fig.write_image(f'{path}/flee.png')
 
-    def armed_or_not(self, img_out=False, csv_out=False):
+    def armed_or_not(self, img_out=False, csv_out=False, path=None):
         shoot = self.shoots_df.filter(col(c.STATE) == 'NY')
         arm_df = shoot.select(c.ARMED, 'race_name')\
                       .na.drop(subset=[c.ARMED])\
@@ -230,7 +232,7 @@ class SparkShoots:
             arm_dfpd = self_toPandas(_arm_df)
 
             if csv_out:
-                self._save_csv(arm_dfpd, f'{label}.csv')
+                self._save_csv(arm_dfpd, f'{path}/{label}.csv')
 
             if img_out:
                 fig = go.Figure(data=[
@@ -243,18 +245,18 @@ class SparkShoots:
                     )
                 ])
                 fig.update_layout(title_text=f'New York: {label}', title_x=0.5)
-                fig.write_image(f'{label}_ny.png')
+                fig.write_image(f'{path}/{label}_ny.png')
 
-    def blacklivesmatter(self, img_out=False, csv_out=False):
+    def blacklivesmatter(self, img_out=False, csv_out=False, path=None):
         black = self.shoots_df.filter(col(c.RACE) == 'B')
         black_state = black.select(c.RACE, c.STATE).groupby(c.STATE).count().toPandas()
         black_year = black.select(c.RACE, 'year').groupby('year').count().toPandas()
         shoota = self.shoots_df.select(c.RACE, c.AGE).toPandas()
 
         if csv_out:
-            self._save_csv(black_state, 'black_state.csv')
-            self._save_csv(black_year, 'black_year.csv')
-            self._save_csv(shoota, 'shoota.csv')
+            self._save_csv(black_state, f'{path}/black_state.csv')
+            self._save_csv(black_year, f'{path}/black_year.csv')
+            self._save_csv(shoota, f'{path}/shoota.csv')
 
         if img_out:
             fig = make_subplots(
@@ -305,18 +307,18 @@ class SparkShoots:
                 ),
             )
             fig.update_layout(template='plotly_dark', showlegend=False)
-            fig.write_image('blacklivesmattersp.png')
+            fig.write_image(f'{path}/blacklivesmattersp.png')
 
-    def allrace(self, img_out=False, csv_out=False):
+    def allrace(self, img_out=False, csv_out=False, path=None):
         year_shoot = self.shoots_df.select('year').groupby('year').count().toPandas()
         shoot_state = self.shoots_df.select(c.STATE).groupby(c.STATE).count().toPandas()
         shootb = self.shoots_df.filter(col('race_name') != 'Others')
         only_race = shootb.select('race_name').groupby('race_name').count().toPandas()
 
         if csv_out:
-            self._save_csv(year_shoot, 'year_shoot.csv')
-            self._save_csv(shoot_state, 'shoot_state.csv')
-            self._save_csv(only_race, 'only_race.csv')
+            self._save_csv(year_shoot, f'{path}/year_shoot.csv')
+            self._save_csv(shoot_state, f'{path}/shoot_state.csv')
+            self._save_csv(only_race, f'{path}/only_race.csv')
 
         if img_out:
             fig = make_subplots(
@@ -364,4 +366,4 @@ class SparkShoots:
                 ),
             )
             fig.update_layout(template='plotly_dark')
-            fig.write_image('allstateracessp.png')
+            fig.write_image(f'{path}/allstateracessp.png')

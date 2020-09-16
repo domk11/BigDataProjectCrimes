@@ -1,15 +1,14 @@
 # Just for test with PySpark MLib not really useful for the abalysis
-#
-#
 
-
-from src.spark import create_session, create_df
 from pyspark.ml.feature import StringIndexer, VectorAssembler
 from pyspark.ml.feature import OneHotEncoderEstimator, OneHotEncoder
 from pyspark.ml.classification import LogisticRegression, OneVsRest
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 from pyspark.ml import Pipeline
 import pyspark.sql.functions as F
+
+from src.spark import create_session, create_df
+from config import PATH
 
 
 def _parse_race(race):
@@ -91,13 +90,10 @@ class Shootings:
 
 
 def main():
-
     spark = create_session('wash_post_shootings')
     spark.sparkContext.setLogLevel('ERROR')
 
     try:
-
-        output_base = '/home/marco/output/'
         df = create_df(spark)
 
         sh = Shootings(df)

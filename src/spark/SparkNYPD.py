@@ -174,7 +174,7 @@ class SparkNYPD:
             sns.catplot(x=c.BOROUGH,  # x variable name
                         y='count',  # y variable name
                         hue='yearpd',  # elements in each group variable name
-                        data=df,  # dataframe to plot
+                        data=crimes_pddf,  # dataframe to plot
                         kind='bar',
                         height=8.27, aspect=11.7 / 8.27)
 

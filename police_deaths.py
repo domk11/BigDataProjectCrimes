@@ -1,6 +1,7 @@
 from src.spark import create_session, create_df
 from src.spark.SparkPDDE import SparkPDDE
 from src.database.contracts import police_contract as c
+from config import PATH
 
 
 def main():
@@ -9,20 +10,17 @@ def main():
     spark.sparkContext.setLogLevel('ERROR')
 
     try:
-
-        output_base = '/home/marco/output/'
         nypd_df = create_df(spark)
 
         pd = SparkPDDE(nypd_df)
-        pd.deaths_trend(img_out=output_base + 'police_deaths.png',
-                        csv_out=output_base + 'police_deaths.csv')
-        pd.deaths_cause_topN(img_out=output_base + 'police_top_deaths.png',
-                             csv_out=output_base + 'police_top_deaths.csv')
-        pd.deaths_states_topN(n=10, img_out=output_base + 'police_deaths_state.png',
-                              csv_out=output_base + 'police_deaths_state.csv')
+        pd.deaths_trend(img_out=f'{PATH}/police_deaths.png',
+                        csv_out=f'{PATH}/police_deaths.csv')
+        pd.deaths_cause_topN(img_out=f'{PATH}/police_top_deaths.png',
+                             csv_out=f'{PATH}/police_top_deaths.csv')
+        pd.deaths_states_topN(n=10, img_out=f'{PATH}/police_deaths_state.png',
+                              csv_out=f'{PATH}/police_deaths_state.csv')
 
-        print("Done")
-
+        print('Done')
     except Exception as e:
         print(e)
     finally:

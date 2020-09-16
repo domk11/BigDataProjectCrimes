@@ -2,6 +2,7 @@ import time
 
 from src.spark import create_session, create_df, SparkCensus
 from src.database.contracts import census_contract as c
+from config import PATH
 
 
 def main():
@@ -9,12 +10,10 @@ def main():
     spark.sparkContext.setLogLevel('ERROR')
 
     try:
-        output_base = '/home/marco/output/'
-
         census_df = create_df(spark)
         census = SparkCensus(census_df)
 
-        census.race_by_borough(img_out=output_base, csv_out=output_base + 'districts_demo.csv')
+        census.race_by_borough(img_out=True, csv_out=True, path=PATH)
     except Exception as e:
         print(e)
     finally:

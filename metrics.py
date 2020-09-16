@@ -1,12 +1,16 @@
 import pandas as pd
 import numpy as np
 
+from config import PATH
+
+
 class MetricEvaluator:
 
     def m1(self, csv_file):
-        """ Computes the rate of increase for crime by year """
-        """ inputs: crimes_trend.csv """
+        """Computes the rate of increase for crime by year
 
+        input: crimes_trend.csv
+        """
         df = pd.read_csv(csv_file, index_col=0)
         df['ratio'] = df['count'].div(df['count'].shift(1)) - 1
         df = df.dropna(subset=['ratio'])[['yearpd', 'ratio']]
@@ -14,9 +18,10 @@ class MetricEvaluator:
         print(df)
 
     def m2(self, csv_shootings_armed, csv_shootings_unarmed):
-        """ Computes and compare the ratio of armed/not armed blacks dead with whites """
-        """ input: armed.csv, unarmed.csv """
+        """ Computes and compare the ratio of armed/not armed blacks dead with whites
 
+        input: armed.csv, unarmed.csv
+        """
         df_armed = pd.read_csv(csv_shootings_armed, usecols=['race_name', 'armed', 'count'])
         df_unarmed = pd.read_csv(csv_shootings_unarmed, usecols=['race_name', 'armed', 'count'])
 
@@ -40,12 +45,13 @@ class MetricEvaluator:
         m1 = perc_armed_blacks / perc_armed_whites
         m2 = perc_unarmed_blacks / perc_unarmed_whites
 
-        print("Killed: (Armed)B/W: %.2f   - (Unarmed)B/W: %.2f" % (m1, m2))
+        print(f'Killed: (Armed)B/W: {m1:.2f}   - (Unarmed)B/W: {m2:.2f}')
 
     def m3(self, csv_crimes_severity):
-        """ Computes the ratio of severe crimes on the overall count """
-        """ input: crimes_severity.csv """
+        """ Computes the ratio of severe crimes on the overall count
 
+        input: crimes_severity.csv
+        """
         df_severity = pd.read_csv(csv_crimes_severity)
 
         years = df_severity['yearpd'].unique()
@@ -57,23 +63,24 @@ class MetricEvaluator:
             severes = year_df[year_df['LAW_CAT_CD'] == 'FELONY']['count'].values.tolist()[0]
             total = year_df['count'].sum()
             ratio = severes / total
-            print(f"Year {year} - Severes: {severes}, Total: {total} --> ratio: %.2f" % (ratio))
+            print(f'Year {year} - Severes: {severes}, Total: {total} --> ratio: {ratio:.2f}')
             data.append([year, ratio])
 
         df_out = pd.DataFrame(data, columns=['yearpd', 'ratio'])
-        print("The variance of column ratio is: ", df_out['ratio'].var())
+        print(f'The variance of column ratio is: {df_out["ratio"].var()}')
 
     def m4(self, csv_crimes_district_race, csv_demo):
-        """ Computes the incidence score of an ethnicity on the criminality of the district, normalized by the demo """
-        """ input: crimes_districts_race.csv, districts_demo.csv """
+        """ Computes the incidence score of an ethnicity on the criminality of the district, normalized by the demo
 
+        input: crimes_districts_race.csv, districts_demo.csv
+        """
         df_districts = pd.read_csv(csv_crimes_district_race, index_col=0)
-        distiricts = df_districts['BORO_NM'].unique()
+        districts = df_districts['BORO_NM'].unique()
 
         df_demo = pd.read_csv(csv_demo, index_col=0)
 
         tabs = []
-        for dist in distiricts:
+        for dist in districts:
             df_distr = df_districts[df_districts['BORO_NM'] == dist].copy()
             df_demo_ = df_demo[df_demo['CTYNAME'] == dist].copy()
 
@@ -82,7 +89,7 @@ class MetricEvaluator:
 
             df = pd.merge(df_distr, df_demo_, how='left', left_on=['BORO_NM', 'SUSP_RACE'], right_on=['CTYNAME', 'IMPRACE'])
 
-            df = df[['BORO_NM','SUSP_RACE', 'ratio_x', 'ratio_y']]
+            df = df[['BORO_NM', 'SUSP_RACE', 'ratio_x', 'ratio_y']]
             df['incidence'] = df['ratio_x'] * df['ratio_y']
 
             tab = pd.pivot_table(df, index=['BORO_NM'], values=['incidence'], columns=['SUSP_RACE'])
@@ -92,8 +99,10 @@ class MetricEvaluator:
         print(out_df)
 
     def m5(self, csv_shootings, csv_police_deaths):
-        """ Compare the variation rates of police deaths with blacks deaths """
-        """ input: year_shoot.csv, police_deaths.csv """
+        """ Compare the variation rates of police deaths with blacks deaths
+
+        input: year_shoot.csv, police_deaths.csv
+        """
         df_police_deaths = pd.read_csv(csv_police_deaths, index_col=0)
         df_shootings = pd.read_csv(csv_shootings, index_col=0)
 
@@ -103,23 +112,20 @@ class MetricEvaluator:
         df_shootings['ratio'] = df_shootings['count'].div(df_shootings['count'].shift(1)) - 1
         df_shootings = df_shootings.dropna(subset=['ratio'])[['year', 'ratio']]
 
-        print("Police Deaths: ")
+        print('Police Deaths: ')
         print(df_police_deaths)
 
-        print("Blacks Deaths: ")
+        print('Blacks Deaths: ')
         print(df_shootings)
 
 
 def main():
-
-    output_path = '/home/marco/output/'
-
     metrics = MetricEvaluator()
-    metrics.m1(output_path + 'crimes_trend.csv')
-    metrics.m2(output_path + 'armed.csv', output_path + 'unarmed.csv')
-    metrics.m3(output_path + 'crimes_severity.csv')
-    metrics.m4(output_path + 'crimes_districts_race.csv', output_path + 'districts_demo.csv')
-    metrics.m5(output_path + 'year_shoot.csv', output_path + 'police_deaths.csv')
+    metrics.m1(f'{PATH}/crimes_trend.csv')
+    metrics.m2(f'{PATH}/armed.csv', f'{PATH}/unarmed.csv')
+    metrics.m3(f'{PATH}/crimes_severity.csv')
+    metrics.m4(f'{PATH}/crimes_districts_race.csv', f'{PATH}/districts_demo.csv')
+    metrics.m5(f'{PATH}/year_shoot.csv', f'{PATH}/police_deaths.csv')
 
 
 if __name__ == '__main__':

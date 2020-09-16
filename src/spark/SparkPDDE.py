@@ -1,12 +1,12 @@
 import pyspark.sql.functions as F
 from pyspark import StorageLevel
 from pyspark.sql.types import *
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 
 from src.database.contracts import police_contract as c
+
 
 plt.rcParams['figure.figsize'] = (12, 8)
 
@@ -21,11 +21,8 @@ class SparkPDDE:
 
     def _preprocess(self):
         self.pdde_df = self.pdde_df.withColumn(c.CANINE, F.when(F.col(c.CANINE) == 'TRUE', 1).otherwise(0).cast('int'))\
-                                   .withColumn(c.STATE, F.trim(F.col(c.STATE)))
-
-        self.pdde_df = self.pdde_df.filter(
-            (F.col(c.YEAR) > 2008) & (F.col(c.YEAR) < 2020)
-        )
+                                   .withColumn(c.STATE, F.trim(F.col(c.STATE)))\
+                                   .filter((F.col(c.YEAR) > 2008) & (F.col(c.YEAR) < 2020))
 
         # trigger the cache
         self.pdde_df.persist(StorageLevel.MEMORY_AND_DISK).count()
@@ -34,7 +31,6 @@ class SparkPDDE:
         df.to_csv(csv_out)
 
     def deaths_cause_topN(self, n=10, df=None, img_out=None, csv_out=None, cache=False):
-
         pdde_df = self.pdde_df
 
         if df:
@@ -69,7 +65,6 @@ class SparkPDDE:
         return counts_deaths_pddf_top_N
 
     def deaths_states_topN(self, n=5, df=None, img_out=None, csv_out=None, cache=False):
-
         pdde_df = self.pdde_df
 
         if df:
@@ -95,7 +90,6 @@ class SparkPDDE:
         if csv_out:
             self._save_csv(counts_deaths_pddf_top_N, csv_out)
 
-
         if img_out:
             counts_deaths_pddf_top_N.plot.barh(x=c.STATE, y='count')
             plt.xlabel('States with more deaths in Police')
@@ -104,9 +98,7 @@ class SparkPDDE:
 
         return counts_deaths_pddf_top_N
 
-
     def deaths_trend(self, df=None, img_out=None, csv_out=None, cache=False):
-
         pdde_df = self.pdde_df
 
         if df:
@@ -135,7 +127,7 @@ class SparkPDDE:
 
             ax.plot(X, Y, label='Police Deaths')
             ax.plot(X, Y_pred, '--', label='Trend')
-            ax.set(xlabel=f'Year - 2009-2016',
+            ax.set(xlabel='Year - 2009-2016',
                    ylabel='Total records',
                    title='Year-on-year police deaths records')
             ax.grid(b=True, which='both', axis='y')
@@ -143,4 +135,3 @@ class SparkPDDE:
             plt.savefig(img_out)
 
         return deaths_df
-

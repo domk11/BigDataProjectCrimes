@@ -2,6 +2,7 @@ import time
 
 from src.spark import create_session, create_df, SparkPolitics
 from src.database.contracts import politics_contract as c
+from config import PATH
 
 
 def main():
@@ -12,7 +13,7 @@ def main():
         politics_df = create_df(spark)
         politics = SparkPolitics(politics_df)
 
-        politics.polls_map(img_out=True)
+        politics.polls_map(img_out=True, path=PATH)
     except Exception as e:
         print(e)
     finally:

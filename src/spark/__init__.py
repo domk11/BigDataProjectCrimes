@@ -10,6 +10,7 @@ from .SparkCensus import SparkCensus
 from .SparkShoots import SparkShoots
 from .spark_politics import SparkPolitics
 
+
 MONGO_URI = 'mongodb://localhost:27017/datascience'
 
 

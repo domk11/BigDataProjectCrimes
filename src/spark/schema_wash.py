@@ -1,4 +1,4 @@
-from pyspark.sql.types import StructType, StructField, StringType, DateType, IntegerType, DoubleType
+from pyspark.sql.types import StructType, StructField, StringType, DateType
 
 from src.database.contracts import wash_contract as c
 

@@ -93,6 +93,10 @@ def convert_armed(armed):
     return 'armed' if armed != 'unarmed' else 'unarmed'
 
 
+def calculate_winner(rep, dem):
+    return 1 if rep > dem else 0
+
+
 udf_get_year = F.udf(get_year, IntegerType())
 udf_get_month = F.udf(get_month, IntegerType())
 udf_parse_locus = F.udf(parse_locus)
@@ -103,6 +107,7 @@ udf_convert_race_shoots = F.udf(convert_race_shoots)
 udf_convert_date_to_datetime = F.udf(lambda x: datetime.strptime(x, '%Y-%m-%d'), DateType())
 udf_convert_date_to_string = F.udf(convert_date)
 udf_convert_armed = F.udf(convert_armed)
+udf_calculate_winner = F.udf(calculate_winner)
 
 
 def _map_to_pandas(rdds):
