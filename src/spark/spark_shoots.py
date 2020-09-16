@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 from pyspark import StorageLevel
-from pyspark.sql.functions import col
+from pyspark.sql.functions import *
 from pyspark.sql.types import *
 import plotly.graph_objects as go
 import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
-
+import pandas as pd
 from src.database.contracts import wash_contract as c
 from utils import self_toPandas, udf_get_month, udf_convert_race_shoots, \
                   udf_convert_date_to_datetime, udf_convert_date_to_string, \
@@ -75,7 +75,8 @@ class SparkShoots:
         return go.Bar(x=temp_month, y=monthly_df.loc[monthly_df['year'] == year]['count'], name=year, marker_color=color)
 
     def yearly(self, monthly_df, img_out=False, csv_out=False):
-        monthly_df['year'] = monthly_df[c.DATE].dt.strftime('%Y')
+        monthly_df[c.DATE] = pd.to_datetime(monthly_df[c.DATE])
+        monthly_df['year'] = monthly_df['date'].dt.strftime('%Y')
 
         if csv_out:
             self._save_csv(monthly_df, 'yearly.csv')
@@ -117,7 +118,8 @@ class SparkShoots:
             fig.write_image('kills_year_sp.png')
 
     def agehist(self):
-        hist_data = [self.shoots_df[c.AGE].dropna()]
+        hist_data = self.shoots_df.select(c.AGE).filter(length(col(c.AGE))>0)
+        hist_data = [hist_data.toPandas()[c.AGE].astype(int).dropna()]
         group_labels = ['Age']
         colors = ['blue']
         fig = go.Figure()
@@ -185,7 +187,8 @@ class SparkShoots:
             fig.write_image('crimes_per_states.png')
 
     def armed(self):
-        armed = list(self.shoots_df[c.ARMED].dropna().unique())
+        armed = self.shoots_df.select('armed').toPandas()
+        armed = list(armed['armed'].dropna().unique())
         fig, ax = plt.subplots(1, 1, figsize=[17, 10])
         wc = WordCloud(background_color='black', colormap='OrRd_r', width=600, height=400).generate(' '.join(armed))
         ax.imshow(wc, interpolation='bilinear')
@@ -194,8 +197,8 @@ class SparkShoots:
         plt.savefig('armed.png')
 
     def flee(self, img_out=False, csv_out=False):
-        arm_df = self.shoots_df[c.FLEE].value_counts().reset_index().rename(columns={'index': c.FLEE, c.FLEE: 'count'})
-
+        arm_df = self.shoots_df.select(c.FLEE).groupby(c.FLEE).count()
+        arm_df = self_toPandas(arm_df)
         if csv_out:
             self._save_csv(arm_df, 'flee.csv')
 
