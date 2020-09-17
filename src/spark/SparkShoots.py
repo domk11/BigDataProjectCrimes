@@ -7,6 +7,7 @@ import plotly.figure_factory as ff
 from plotly.subplots import make_subplots
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import pandas as pd
+
 from src.database.contracts import wash_contract as c
 from utils import self_toPandas, udf_get_month, udf_convert_race_shoots, \
                   udf_convert_date_to_datetime, udf_convert_date_to_string, \
@@ -96,9 +97,9 @@ class SparkShoots:
 
     def kills_per_year(self, img_out=False, csv_out=False, path=None):
         year_shoot = self.shoots_df.select('year')\
-                         .groupby('year')\
-                         .count()\
-                         .sort(col('year'))
+                                   .groupby('year')\
+                                   .count()\
+                                   .sort(col('year'))
 
         year_shoot = self_toPandas(year_shoot)
 
