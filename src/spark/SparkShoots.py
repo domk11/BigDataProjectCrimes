@@ -218,8 +218,7 @@ class SparkShoots:
             fig.write_image(f'{path}/flee.png')
 
     def armed_or_not(self, img_out=False, csv_out=False, path=None):
-        shoot = self.shoots_df.filter(col(c.STATE) == 'NY')
-        arm_df = shoot.select(c.ARMED, 'race_name')\
+        arm_df = self.shoots_df.select(c.ARMED, 'race_name')\
                       .na.drop(subset=[c.ARMED])\
                       .na.drop(subset=['race_name'])
 
@@ -244,8 +243,8 @@ class SparkShoots:
                         insidetextorientation='radial'
                     )
                 ])
-                fig.update_layout(title_text=f'New York: {label}', title_x=0.5)
-                fig.write_image(f'{path}/{label}_ny.png')
+                fig.update_layout(title_text=f'USA: {label}', title_x=0.5)
+                fig.write_image(f'{path}/{label}.png')
 
     def blacklivesmatter(self, img_out=False, csv_out=False, path=None):
         black = self.shoots_df.filter(col(c.RACE) == 'B')
