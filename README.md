@@ -15,44 +15,44 @@ Create an output folder as described into settings file.
 
 2) Run dataset filtering and cleaning
 
-'''python
+```python
     python filter_original_dataset.py
-'''
+```
 
 3) Run New York crime analysis
 
-'''python
+```python
     python crimes_type.py
-'''
+```
 
 4) Run Washington post killings analysis
 
-'''python
+```python
     python shoots.py
-'''
+```
 
 5) Run Presidential elections analysis 
 
-'''python
+```python
     python polls.py
-'''
+```
 
 6) Run Police Deaths analysis
 
-'''python
+```python
     python police_deaths.py
-'''
+```
 
 7) Run Districts Census
 
-'''python
+```python
     python pop_distribution.py
-'''
+```
 
 8) Census analysis with mapreduce
 
 Into src/mapreduce
 
-'''python
+```python
     python run.py
-'''
+```
