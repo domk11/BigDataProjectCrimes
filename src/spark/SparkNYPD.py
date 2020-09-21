@@ -68,7 +68,7 @@ class SparkNYPD:
             self._save_csv(pddf, csv_out)
 
         if img_out:
-            fig, ax = plt.subplots(figsize=(12,8))
+            fig, ax = plt.subplots(figsize=(12, 8))
             ax.plot(X, Y, label='Crimes')
             ax.plot(X, Y_pred, '--', label='Trend')
             ax.set(xlabel='Year - 2009-2019',
@@ -273,11 +273,11 @@ class SparkNYPD:
         if cache:
             nypd_df = nypd_df.persist()
 
-        crimes_df = nypd_df.filter(
+        crimes_df = nypd_df.select(c.BOROUGH, c.OFFENSE_DESCRIPTION).filter(
             (F.length(F.col(c.BOROUGH)) > 0) & (F.length(F.col(c.OFFENSE_DESCRIPTION)) > 0)
         )
 
-        crimes_pddf = crimes_df.toPandas()
+        crimes_pddf = self_toPandas(crimes_df, 4)
         df = pd.crosstab(crimes_pddf.BORO_NM, crimes_pddf.OFNS_DESC)
 
         print(df)
@@ -317,7 +317,7 @@ class SparkNYPD:
 
         crimes_df = crimes_df.groupBy(c.BOROUGH, c.RACE).count()
 
-        pddf = crimes_df.toPandas()
+        pddf = self_toPandas(crimes_df)
         print(pddf)
 
         if csv_out:
@@ -475,12 +475,13 @@ class SparkNYPD:
         if cache:
             nypd_df = nypd_df.persist()
 
-        nypd_df = nypd_df.select(c.RACE, c.OFFENSE_DESCRIPTION)\
-                         .groupby(c.OFFENSE_DESCRIPTION)\
+        nypd_df = nypd_df.select(c.RACE, c.OFFENSE_DESCRIPTION)
+
+        list_df = nypd_df.groupby(c.OFFENSE_DESCRIPTION)\
                          .count()\
                          .orderBy('count', ascending=False)
 
-        top5pd = self_toPandas(nypd_df)
+        top5pd = self_toPandas(list_df)
         top5pd = top5pd[:5]
         top5list = top5pd[c.OFFENSE_DESCRIPTION].values.tolist()
 
