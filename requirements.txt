@@ -21,7 +21,7 @@ Jinja2==2.11.2
 joblib==0.16.0
 kaleido==0.0.3.post1
 kiwisolver==1.2.0
-lxml==4.5.2
+lxml==4.6.3
 MarkupSafe==1.1.1
 matplotlib==3.3.1
 more-itertools==8.4.0
